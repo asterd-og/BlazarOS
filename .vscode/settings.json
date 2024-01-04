@@ -1,0 +1,19 @@
+{
+    "files.associations": {
+        "string.h": "c",
+        "stdarg.h": "c",
+        "gdt.h": "c",
+        "vmm.h": "c",
+        "memory.h": "c",
+        "pmm.h": "c",
+        "main.h": "c",
+        "printf.h": "c",
+        "acpi.h": "c",
+        "madt.h": "c",
+        "types.h": "c",
+        "lapic.h": "c",
+        "cpu.h": "c",
+        "serial.h": "c",
+        "smp.h": "c"
+    }
+}
