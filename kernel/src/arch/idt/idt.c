@@ -54,7 +54,7 @@ void idt_set_entry(u8 vec, void* isr) {
 }
 
 void irq_register(u8 vec, void* handler) {
-    ioapic_redirect_irq(bsp_lapic_id, vec + 0x20);
+    ioapic_redirect_irq(bsp_lapic_id, vec + 0x20, true);
     irq_handlers[vec] = handler;
 }
 

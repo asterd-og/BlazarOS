@@ -27,7 +27,7 @@ madt_ioapic* ioapic_get_gsi(u32 gsi) {
     return NULL;
 }
 
-void ioapic_redirect_gsi(u32 lapic_id, u8 vec, u32 gsi, u16 flags) {
+void ioapic_redirect_gsi(u32 lapic_id, u8 vec, u32 gsi, u16 flags, bool mask) {
     madt_ioapic* ioapic = ioapic_get_gsi(gsi);
 
     u64 redirect = vec;
@@ -40,7 +40,8 @@ void ioapic_redirect_gsi(u32 lapic_id, u8 vec, u32 gsi, u16 flags) {
         redirect |= (1 << 15);
     }
 
-    redirect |= (1 << 16);
+    if (mask) redirect |= (1 << 16);
+    else redirect &= ~(1 << 16);
 
     redirect |= (uint64_t)lapic_id << 56;
 
@@ -49,20 +50,20 @@ void ioapic_redirect_gsi(u32 lapic_id, u8 vec, u32 gsi, u16 flags) {
     ioapic_write(ioapic, redir_table + 1, (u32)(redirect >> 32));
 }
 
-void ioapic_redirect_irq(u32 lapic_id, u8 irq) {
+void ioapic_redirect_irq(u32 lapic_id, u8 irq, bool mask) {
     u8 idx = 0;
     madt_iso* iso;
 
     while (idx < madt_iso_len) {
         iso = madt_iso_list[idx];
         if (iso->irq_src == irq - 0x20) {
-            ioapic_redirect_gsi(lapic_id, irq, iso->gsi, iso->flags);
+            ioapic_redirect_gsi(lapic_id, irq, iso->gsi, iso->flags, mask);
             return;
         }
         idx++;
     }
 
-    ioapic_redirect_gsi(lapic_id, irq, irq - 0x20, 0);
+    ioapic_redirect_gsi(lapic_id, irq, irq - 0x20, 0, mask);
 }
 
 void ioapic_init() {
