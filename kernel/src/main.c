@@ -133,11 +133,8 @@ void _start(void) {
     ioapic_init();
     log_ok("IO/APIC Initialised.\n");
 
-    gdt_init();
-    idt_reinit();
-
-    //smp_init();
-    //log_ok("SMP Initialised.\n");
+    smp_init();
+    log_ok("SMP Initialised.\n");
 
     keyboard_init();
     char ch = '\0';

@@ -60,7 +60,7 @@ void irq_register(u8 vec, void* handler) {
 
 void isr_handler(registers* regs) {
     if (regs->int_no == 0xff) {
-        panic("Spurious!\n");
+        panic("Spurious interrupt!\n");
         for (;;) __asm__ volatile("hlt");
     }
 

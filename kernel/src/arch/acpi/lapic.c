@@ -1,11 +1,11 @@
 #include <arch/acpi/lapic.h>
 
 void lapic_write(u32 reg, u32 val) {
-    mmio_write32(HIGHER_HALF(lapic_addr) + reg, val);
+    mmio_write32(HIGHER_HALF(0xfee00000) + reg, val);
 }
 
 u32 lapic_read(u32 reg) {
-    return mmio_read32(HIGHER_HALF(lapic_addr) + reg);
+    return mmio_read32(HIGHER_HALF(0xfee00000) + reg);
 }
 
 void lapic_eoi() {
@@ -46,8 +46,4 @@ void lapic_init() {
     lapic_set_base(lapic_get_base());
     lapic_write(0x80, 0); // enable interrupts
     lapic_write(0xf0, lapic_read(0xf0) | 0x100);
-    
-    if (lapic_read(0x0a0) == 0) {
-        log_bad("LAPIC: Couldn't initialise.\n");
-    }
 }

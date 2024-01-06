@@ -15,8 +15,7 @@ void smp_init_cpu(struct limine_smp_info* smp_info) {
     char* stack = (char*)pmm_alloc(8); // ≃ 32 kib
     __asm__ ("mov %0, %%rsp" : : "r"(stack) : "memory");
 
-    lapic_init_cpu(smp_info->lapic_id);
-    lapic_start_cpu(smp_info->lapic_id, 0x800);
+    lapic_init();
     
     log_info("CPU %lx is up.\n", smp_info->processor_id);
 
