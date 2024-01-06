@@ -14,6 +14,12 @@
         "lapic.h": "c",
         "cpu.h": "c",
         "serial.h": "c",
-        "smp.h": "c"
+        "smp.h": "c",
+        "pit.h": "c",
+        "heap.h": "c",
+        "fb.h": "c",
+        "sched.h": "c",
+        "log.h": "c",
+        "keyboard.h": "c"
     }
 }

@@ -1,8 +1,6 @@
-#include <sched/pit.h>
-#include <serial/serial.h>
+#include <dev/timer/pit.h>
 
 void pit_handler(registers* regs) {
-    serial_printf("LOLL");
     sched_switch(regs);
 }
 

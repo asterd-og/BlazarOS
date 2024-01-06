@@ -7,7 +7,8 @@
 #include <lib/string/string.h>
 #include <lib/log.h>
 
-#include <serial/serial.h>
+#include <dev/serial/serial.h>
+#include <dev/ps2/keyboard.h>
 
 #include <arch/gdt/gdt.h>
 #include <arch/idt/idt.h>
@@ -26,7 +27,6 @@
 #include <mm/vmm/vmm.h>
 #include <mm/heap/heap.h>
 
-#include <sched/pit.h>
 #include <sched/sched.h>
 
 // Set the base revision to 1, this is recommended as this is the latest
@@ -133,15 +133,20 @@ void _start(void) {
     ioapic_init();
     log_ok("IO/APIC Initialised.\n");
 
-    smp_init();
-    log_ok("SMP Initialised.\n");
+    gdt_init();
+    idt_reinit();
 
-    sched_new_proc(idle);
-    sched_new_proc(task1);
+    //smp_init();
+    //log_ok("SMP Initialised.\n");
 
-    pit_init();
-
-    log_ok("Scheduler Initialised.\n");
+    keyboard_init();
+    char ch = '\0';
+    while (true) {
+        ch = keyboard_get();
+        if (ch != '\0') {
+            printf("%c", ch);
+        }
+    }
 
     // We're done, just hang...
     for (;;)

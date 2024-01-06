@@ -1,5 +1,4 @@
 #include <arch/smp/smp.h>
-#include <serial/serial.h>
 
 u32 bsp_lapic_id;
 

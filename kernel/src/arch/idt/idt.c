@@ -54,14 +54,14 @@ void idt_set_entry(u8 vec, void* isr) {
 }
 
 void irq_register(u8 vec, void* handler) {
-    ioapic_redirect_irq(bsp_lapic_id, vec + 0x20, true);
+    ioapic_redirect_irq(bsp_lapic_id, vec + 32, vec, false);
     irq_handlers[vec] = handler;
 }
 
 void isr_handler(registers* regs) {
-    if (regs->int_no > 32) {
-        serial_printf("> %lx\n", regs->int_no);
-        return;
+    if (regs->int_no == 0xff) {
+        panic("Spurious!\n");
+        for (;;) __asm__ volatile("hlt");
     }
 
     __asm__ volatile("cli");
@@ -72,6 +72,7 @@ void isr_handler(registers* regs) {
 }
 
 void irq_handler(registers* regs) {
+    serial_printf(".");
     void(*handler)(registers*);
     handler = irq_handlers[regs->int_no - 32];
 
@@ -87,7 +88,6 @@ void idt_reinit() {
 }
 
 void idt_init() {
-
     for (u16 vec = 0; vec < 256; vec++)
         idt_set_entry(vec, idt_int_table[vec]);
     

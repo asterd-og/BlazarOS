@@ -17,4 +17,5 @@
 
 void ioapic_init();
 
-void ioapic_redirect_irq(u32 lapic_id, u8 irq, bool mask);
+void ioapic_redirect_irq(u32 lapic_id, u8 vec, u8 irq, bool mask);
+u32 ioapic_get_redirect_irq(u8 irq);

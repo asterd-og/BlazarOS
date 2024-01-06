@@ -6,6 +6,7 @@
 #include <arch/acpi/madt.h>
 #include <arch/cpu.h>
 
+#include <mm/vmm/vmm.h>
 #include <mm/memory.h>
 
 #include <lib/log.h>

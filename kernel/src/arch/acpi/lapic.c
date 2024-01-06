@@ -9,7 +9,7 @@ u32 lapic_read(u32 reg) {
 }
 
 void lapic_eoi() {
-    lapic_write(0x0b0, 0x0);
+    lapic_write((u8)0xb0, 0x0);
 }
 
 void lapic_ipi(u32 id, u32 dat) {
@@ -34,6 +34,20 @@ u32 lapic_get_id() {
     return lapic_read(0x0020) >> LAPIC_ICDESTSHIFT;
 }
 
+void lapic_set_base(u64 lapic) {
+    wrmsr(0x800, (lapic & 0xfffff000ULL) | 0x800);
+}
+
+u64 lapic_get_base() {
+    return rdmsr(0x1bU) & 0xfffff000ULL;
+}
+
 void lapic_init() {
-    lapic_write(0x00f0, lapic_read(0x00f0) | (1 << 8) | 0xff);
+    lapic_set_base(lapic_get_base());
+    lapic_write(0x80, 0); // enable interrupts
+    lapic_write(0xf0, lapic_read(0xf0) | 0x100);
+    
+    if (lapic_read(0x0a0) == 0) {
+        log_bad("LAPIC: Couldn't initialise.\n");
+    }
 }

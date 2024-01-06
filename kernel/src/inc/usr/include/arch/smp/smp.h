@@ -15,7 +15,6 @@
 #include <lib/log.h>
 
 #include <sched/sched.h>
-#include <sched/pit.h>
 
 extern u32 bsp_lapic_id;
 

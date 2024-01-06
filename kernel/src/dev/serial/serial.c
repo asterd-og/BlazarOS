@@ -1,4 +1,4 @@
-#include <serial/serial.h>
+#include <dev/serial/serial.h>
 
 int serial_bus_status() {
     return inb(COM1 + 5) & 0x20;
