@@ -17,5 +17,7 @@
 #include <sched/sched.h>
 
 extern u32 bsp_lapic_id;
+extern u64 smp_cpu_started;
+extern u64 smp_cpu_count;
 
 void smp_init();

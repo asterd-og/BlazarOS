@@ -20,6 +20,8 @@
         "fb.h": "c",
         "sched.h": "c",
         "log.h": "c",
-        "keyboard.h": "c"
+        "keyboard.h": "c",
+        "idt.h": "c",
+        "limine.h": "c"
     }
 }

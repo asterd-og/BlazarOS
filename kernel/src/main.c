@@ -133,17 +133,14 @@ void _start(void) {
     ioapic_init();
     log_ok("IO/APIC Initialised.\n");
 
+    log_info("CPU 0 lapic id: %x\n", lapic_get_id());
     smp_init();
-    log_ok("SMP Initialised.\n");
 
-    keyboard_init();
-    char ch = '\0';
-    while (true) {
-        ch = keyboard_get();
-        if (ch != '\0') {
-            printf("%c", ch);
-        }
+    while (smp_cpu_started < smp_cpu_count - 1) {
+        __asm__ ("nop");
     }
+
+    log_ok("SMP Initialised.\n");
 
     // We're done, just hang...
     for (;;)

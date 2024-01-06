@@ -72,7 +72,6 @@ void isr_handler(registers* regs) {
 }
 
 void irq_handler(registers* regs) {
-    serial_printf(".");
     void(*handler)(registers*);
     handler = irq_handlers[regs->int_no - 32];
 

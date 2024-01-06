@@ -53,7 +53,6 @@ void ioapic_redirect_gsi(u32 lapic_id, u8 vec, u32 gsi, u16 flags, bool mask) {
 }
 
 void ioapic_redirect_irq(u32 lapic_id, u8 vec, u8 irq, bool mask) {
-    madt_ioapic* ioapic = madt_ioapic_list[0];
     u8 idx = 0;
     madt_iso* iso;
 
