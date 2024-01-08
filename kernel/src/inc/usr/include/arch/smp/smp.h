@@ -32,3 +32,4 @@ typedef struct {
 void smp_init();
 
 cpu_info* this_cpu();
+cpu_info* get_cpu(u64 id);

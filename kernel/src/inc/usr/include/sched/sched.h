@@ -27,7 +27,7 @@ typedef struct {
 
 void sched_init();
 
-process* sched_new_proc(void* func);
+process* sched_new_proc(void* func, u64 cpu_id);
 void sched_kill();
 
 void sched_switch(registers* regs);

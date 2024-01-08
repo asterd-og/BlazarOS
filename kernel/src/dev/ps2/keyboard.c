@@ -39,11 +39,14 @@ void keyboard_handler(registers* regs) {
 }
 
 char keyboard_get() {
+    lock();
     if (keyboard_pressed) {
         keyboard_pressed = false;
+        unlock();
         return keyboard_char;
     }
-    return '\0';
+    unlock();
+    return 0;
 }
 
 void keyboard_init() {

@@ -63,3 +63,8 @@ void smp_init() {
         smp_response->cpus[i]->goto_address = smp_init_cpu;
     }
 }
+
+cpu_info* get_cpu(u64 id) {
+    if (id > smp_cpu_count) return NULL;
+    return smp_cpu_list[id];
+}

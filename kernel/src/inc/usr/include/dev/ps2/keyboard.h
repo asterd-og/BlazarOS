@@ -7,5 +7,7 @@
 
 #include <dev/ps2/keyboard_map.h>
 
+#include <sched/sched.h>
+
 void keyboard_init();
 char keyboard_get();

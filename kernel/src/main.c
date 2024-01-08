@@ -8,9 +8,13 @@
 #include <lib/log.h>
 
 #include <dev/serial/serial.h>
+
 #include <dev/ps2/keyboard.h>
+
 #include <dev/timer/pit/pit.h>
 #include <dev/timer/hpet/hpet.h>
+
+#include <dev/initrd/blazfs.h>
 
 #include <arch/gdt/gdt.h>
 #include <arch/idt/idt.h>
@@ -57,6 +61,13 @@ struct limine_hhdm_request hhdm_request = {
 
 u64 hhdm_offset;
 
+// Modules
+
+struct limine_module_request module_request = {
+    .id = LIMINE_MODULE_REQUEST,
+    .revision = 0
+};
+
 // Halt and catch fire function.
 static void hcf(void) {
     __asm__ ("cli");
@@ -70,12 +81,18 @@ void putchar_(char c) {
     flanterm_write(ft_ctx, str, 1);
 }
 
-void idle() {
-    while (1);
+void* get_mod_addr(int pos) {
+    return module_request.response->modules[pos]->address;
 }
 
-void task1() {
-    printf("Tasking!\n");
+void dumb_terminal() {
+    char c = 0;
+    while (1) {
+        c = keyboard_get();
+        if (c != 0) {
+            printf("%c", c);
+        }
+    }
 }
 
 // The following will be our kernel's entry point.
@@ -120,6 +137,18 @@ void _start(void) {
     vmm_init();
     log_ok("VMM Initialised.\n");
 
+    if (blazfs_init(get_mod_addr(0))) {
+        log_bad("BlazFS: Couldn't get boot module (INITRD).\n");
+        for (;;) ;
+    }
+    log_ok("BlazFS Initialised.\n");
+
+    char* buf = (char*)kmalloc(blazfs_ftell("file.txt"));
+    blazfs_read("file.txt", buf);
+
+    log_info("BlazFS: file.txt size = %d.\n", blazfs_ftell("file.txt"));
+    log_info("BlazFS: file.txt contents = '%s'.\n", buf);
+
     u32 rsdt_addr = acpi_init();
     if (rsdt_addr > 0) {
         log_info("ACPI: RSDT found at %lx.\n", rsdt_addr);
@@ -147,6 +176,7 @@ void _start(void) {
     keyboard_init();
 
     sched_init();
+    sched_new_proc(dumb_terminal, 1);
     pit_init();
 
     // We're done, just hang...

@@ -14,11 +14,17 @@ void sched_wrapper(u64 func) {
     }
 }
 
-process* sched_new_proc(void* func) {
+process* sched_new_proc(void* func, u64 cpu_id) {
     lock();
+
+    if (get_cpu(cpu_id) == NULL) {
+        serial_printf("Sched error: Non-existent CPU %lx\n", cpu_id);
+        return NULL;
+    }
+
     process* proc = (process*)kmalloc(sizeof(process));
 
-    proc->PID = this_cpu()->proc_pid;
+    proc->PID = get_cpu(cpu_id)->proc_pid;
     proc->pm = vmm_new_pm();
     proc->state = PROC_RUNNING;
 
@@ -32,8 +38,8 @@ process* sched_new_proc(void* func) {
     // Stack's size is PAGE_SIZE
     proc->regs.rsp = (u64)(stack + PAGE_SIZE);
 
-    this_cpu()->proc_list[this_cpu()->proc_pid] = proc;
-    this_cpu()->proc_pid++;
+    get_cpu(cpu_id)->proc_list[get_cpu(cpu_id)->proc_pid] = proc;
+    get_cpu(cpu_id)->proc_pid++;
     unlock();
 
     return proc;
@@ -95,15 +101,14 @@ void unlock() {
     __atomic_clear(&(this_cpu()->lock), __ATOMIC_RELEASE);
 }
 
-void sched_test() {
+void sched_idle() {
     while (true) {
-        serial_printf("%x", lapic_get_id());
+        __asm__ ("nop\n\t");
     }
 }
 
 void sched_init() {
     sched_initialised = true;
-    sched_new_proc(sched_test);
-    sched_new_proc(sched_test);
+    sched_new_proc(sched_idle, lapic_get_id());
     irq_register(SCHED_INT_VEC - 32, sched_switch);
 }
