@@ -15,9 +15,6 @@ void smp_init_cpu(struct limine_smp_info* smp_info) {
     idt_reinit();
     vmm_switch_pm(vmm_kernel_pm);
 
-    //char* stack = (char*)pmm_alloc(8); // ≃ 32 kib
-    //__asm__ ("mov %0, %%rsp" : : "r"(stack) : "memory");
-
     lapic_init();
     
     while (smp_cpu_started < smp_info->processor_id - 1) {
