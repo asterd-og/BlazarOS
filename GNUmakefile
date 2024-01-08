@@ -36,7 +36,7 @@ run: run-normal clean
 
 .PHONY: run-normal
 run-normal: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -s -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -no-reboot -no-shutdown -smp 2
+	qemu-system-x86_64 -s -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -no-reboot -no-shutdown -smp 4
 
 .PHONY: run-kvm
 run-kvm: $(IMAGE_NAME).iso

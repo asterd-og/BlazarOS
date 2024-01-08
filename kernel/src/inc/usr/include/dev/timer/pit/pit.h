@@ -10,3 +10,5 @@
 #define PIT_BASE_FREQ 100
 
 void pit_init();
+
+void pit_reset();

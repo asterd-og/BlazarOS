@@ -6,7 +6,7 @@ static idt_entry idt_entries[256];
 static idtr      idt_data;
 extern void*     idt_int_table[];
 
-void* irq_handlers[16] = {};
+void* irq_handlers[256] = {};
 
 static const char* isr_errors[32] = {
     "Division by zero",
@@ -77,6 +77,8 @@ void irq_handler(registers* regs) {
 
     if (handler != NULL)
         handler(regs);
+    //else
+        //serial_pritnf("Tried to access vector %lx\n", regs->int_no);
     
     lapic_eoi();
 }

@@ -19,7 +19,7 @@ typedef struct {
     u8 revision;
     u8 checksum;
     char oem_id[6];
-    char oem_table_id[6];
+    char oem_table_id[8];
     u32 oem_revision;
     u32 creator_id;
     u32 creator_revision;

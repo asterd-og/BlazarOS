@@ -1,7 +1,14 @@
-#include <dev/timer/pit.h>
+#include <dev/timer/pit/pit.h>
+
+u64 pit_ticks = 0;
 
 void pit_handler(registers* regs) {
-    sched_switch(regs);
+    pit_ticks++;
+    lapic_send_all_int(0, SCHED_INT_VEC);
+}
+
+void pit_reset() {
+    irq_register(0, pit_handler);
 }
 
 void pit_init() {

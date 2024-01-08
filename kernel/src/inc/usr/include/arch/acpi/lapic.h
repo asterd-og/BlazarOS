@@ -27,11 +27,18 @@
 #define LAPIC_ICSHRTHND 0x00000000
 #define LAPIC_ICDESTSHIFT 24
 
+#define LAPIC_ICRAIS 0x00080000
+#define LAPIC_ICRAES 0x000c0000
+
 void lapic_init();
+
+void lapic_write(u32 reg, u32 val);
+u32 lapic_read(u32 reg);
 
 void lapic_eoi();
 
 void lapic_ipi(u32 id, u32 dat);
+void lapic_send_all_int(u32 id, u32 vec);
 void lapic_init_cpu(u32 id);
 void lapic_start_cpu(u32 id, u32 vec);
 u32 lapic_get_id();

@@ -9,6 +9,8 @@
 
 #include <dev/serial/serial.h>
 #include <dev/ps2/keyboard.h>
+#include <dev/timer/pit/pit.h>
+#include <dev/timer/hpet/hpet.h>
 
 #include <arch/gdt/gdt.h>
 #include <arch/idt/idt.h>
@@ -141,6 +143,11 @@ void _start(void) {
     }
 
     log_ok("SMP Initialised.\n");
+
+    keyboard_init();
+
+    sched_init();
+    pit_init();
 
     // We're done, just hang...
     for (;;)

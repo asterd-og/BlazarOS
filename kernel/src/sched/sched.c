@@ -1,16 +1,12 @@
 #include <sched/sched.h>
+#include <arch/smp/smp.h>
 
-process* sched_proc_pool[256] = {};
-process* sched_current_proc;
-u64 sched_pid = 0;
-u64 sched_idx = 0;
-
-bool sched_locked = false;
+bool sched_initialised = false;
 
 void sched_wrapper(u64 func) {
     ((u64(*)())func)();
     lock();
-    sched_current_proc->state = PROC_DEAD;
+    this_cpu()->current_proc->state = PROC_DEAD;
     unlock();
     for (;;) {
         __asm__ ("hlt");
@@ -21,7 +17,7 @@ process* sched_new_proc(void* func) {
     lock();
     process* proc = (process*)kmalloc(sizeof(process));
 
-    proc->PID = sched_pid;
+    proc->PID = this_cpu()->proc_pid;
     proc->pm = vmm_new_pm();
     proc->state = PROC_RUNNING;
 
@@ -35,8 +31,8 @@ process* sched_new_proc(void* func) {
     // Stack's size is PAGE_SIZE
     proc->regs.rsp = (u64)(stack + PAGE_SIZE);
 
-    sched_proc_pool[sched_pid] = proc;
-    sched_pid++;
+    this_cpu()->proc_list[this_cpu()->proc_pid] = proc;
+    this_cpu()->proc_pid++;
     unlock();
 
     return proc;
@@ -44,54 +40,69 @@ process* sched_new_proc(void* func) {
 
 void sched_kill() {
     lock();
-    sched_current_proc->state = PROC_DEAD;
+    this_cpu()->current_proc->state = PROC_DEAD;
     unlock();
 }
 
 void sched_remove_proc(u64 pid) {
-    process* proc = sched_proc_pool[pid];
+    process* proc = this_cpu()->proc_list[pid];
     
     vmm_destroy_pm(proc->pm);
     kfree((void*)(proc->regs.rsp - PAGE_SIZE));
     kfree(proc);
     
-    sched_proc_pool[pid] = NULL;
+    this_cpu()->proc_list[pid] = NULL;
 
-    if (pid != sched_pid) {
-        for (u64 i = pid; i < sched_pid; i++) {
-            sched_proc_pool[i] = sched_proc_pool[i + 1];
+    if (pid != this_cpu()->proc_pid) {
+        for (u64 i = pid; i < this_cpu()->proc_pid; i++) {
+            this_cpu()->proc_list[i] = this_cpu()->proc_list[i + 1];
         }
     }
-    sched_pid--;
+    this_cpu()->proc_pid--;
     log_ok("Killed process %ld.\n", pid);
 }
 
 void sched_switch(registers* regs) {
     lock();
-    if (sched_current_proc) {
-        sched_current_proc->regs = *regs;
+    if (this_cpu()->current_proc != NULL) {
+        this_cpu()->current_proc->regs = *regs;
     }
-    sched_current_proc = sched_proc_pool[sched_idx];
-    *regs = sched_current_proc->regs;
-    vmm_switch_pm(sched_current_proc->pm);
+    this_cpu()->current_proc = this_cpu()->proc_list[this_cpu()->proc_idx];
+    *regs = this_cpu()->current_proc->regs;
+    vmm_switch_pm(this_cpu()->current_proc->pm);
 
-    sched_idx++;
-    if (sched_idx == sched_pid) {
-        sched_idx = 0;
+    this_cpu()->proc_idx++;
+    if (this_cpu()->proc_idx == this_cpu()->proc_pid) {
+        this_cpu()->proc_idx = 0;
     }
-    if (sched_proc_pool[sched_idx]->state == PROC_DEAD) {
-        sched_remove_proc(sched_idx);
-        sched_idx = 0;
+    if (this_cpu()->proc_list[this_cpu()->proc_idx]->state == PROC_DEAD) {
+        sched_remove_proc(this_cpu()->proc_idx);
+        this_cpu()->proc_idx = 0;
     }
     unlock();
 }
 
 void lock() {
-    if (sched_locked) return;
-    while (__atomic_test_and_set(&sched_locked, __ATOMIC_ACQUIRE));
+    if (!sched_initialised) return;
+    if (this_cpu()->lock) return;
+    while (__atomic_test_and_set(&(this_cpu()->lock), __ATOMIC_ACQUIRE));
 }
 
 void unlock() {
-    if (!sched_locked) return;
-    __atomic_clear(&sched_locked, __ATOMIC_RELEASE);
+    if (!sched_initialised) return;
+    if (!this_cpu()->lock) return;
+    __atomic_clear(&(this_cpu()->lock), __ATOMIC_RELEASE);
+}
+
+void sched_test() {
+    while (true) {
+        serial_printf("%x", lapic_get_id());
+    }
+}
+
+void sched_init() {
+    sched_initialised = true;
+    sched_new_proc(sched_test);
+    sched_new_proc(sched_test);
+    irq_register(SCHED_INT_VEC - 32, sched_switch);
 }

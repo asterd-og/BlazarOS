@@ -11,6 +11,8 @@
 #include <lib/log.h>
 #include <lib/string/string.h>
 
+#define SCHED_INT_VEC 0x32
+
 enum {
     PROC_DEAD,
     PROC_RUNNING
@@ -22,6 +24,8 @@ typedef struct {
     page_map* pm;
     u64 state;
 } process;
+
+void sched_init();
 
 process* sched_new_proc(void* func);
 void sched_kill();

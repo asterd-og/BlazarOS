@@ -37,3 +37,11 @@ static inline void mmio_write32(void* addr, u32 val) {
 static inline u32 mmio_read32(void* addr) {
     return *((volatile u32*)addr);
 }
+
+static inline void mmio_write64(void* addr, u64 val) {
+    *((volatile u64*)addr) = val;
+}
+
+static inline u64 mmio_read64(void* addr) {
+    return *((volatile u64*)addr);
+}

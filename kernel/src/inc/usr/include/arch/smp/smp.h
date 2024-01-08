@@ -20,4 +20,15 @@ extern u32 bsp_lapic_id;
 extern u64 smp_cpu_started;
 extern u64 smp_cpu_count;
 
+typedef struct {
+    bool lock;
+    u32 lapic_id;
+    process* current_proc;
+    process* proc_list[256];
+    u64 proc_pid;
+    u64 proc_idx;
+} __attribute__((packed)) cpu_info;
+
 void smp_init();
+
+cpu_info* this_cpu();
