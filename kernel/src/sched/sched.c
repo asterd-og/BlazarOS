@@ -1,5 +1,6 @@
 #include <sched/sched.h>
 #include <arch/smp/smp.h>
+#include <dev/serial/serial.h>
 
 bool sched_initialised = false;
 
