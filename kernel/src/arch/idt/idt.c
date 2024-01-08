@@ -1,5 +1,6 @@
 #include <arch/idt/idt.h>
 #include <arch/smp/smp.h>
+#include <sys/syscall.h>
 
 __attribute__((aligned(0x10)))
 static idt_entry idt_entries[256];
@@ -59,6 +60,11 @@ void irq_register(u8 vec, void* handler) {
 }
 
 void isr_handler(registers* regs) {
+    if (regs->int_no == 0x80) {
+        syscall_handler(regs);
+        return;
+    }
+
     if (regs->int_no == 0xff) {
         panic("Spurious interrupt!\n");
         for (;;) __asm__ volatile("hlt");
@@ -77,8 +83,6 @@ void irq_handler(registers* regs) {
 
     if (handler != NULL)
         handler(regs);
-    //else
-        //serial_pritnf("Tried to access vector %lx\n", regs->int_no);
     
     lapic_eoi();
 }
