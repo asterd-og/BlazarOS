@@ -3,6 +3,7 @@
 #include <dev/serial/serial.h>
 
 bool sched_initialised = false;
+u64 sched_pid = 0;
 
 void sched_wrapper(u64 func) {
     ((u64(*)())func)();
@@ -24,9 +25,10 @@ process* sched_new_proc(void* func, u64 cpu_id) {
 
     process* proc = (process*)kmalloc(sizeof(process));
 
-    proc->PID = get_cpu(cpu_id)->proc_pid;
+    proc->PID = sched_pid;
     proc->pm = vmm_new_pm();
     proc->state = PROC_RUNNING;
+    proc->cpu_id = cpu_id;
 
     proc->regs.rip = (u64)sched_wrapper;
     proc->regs.rdi = (u64)func;
@@ -38,8 +40,9 @@ process* sched_new_proc(void* func, u64 cpu_id) {
     // Stack's size is PAGE_SIZE
     proc->regs.rsp = (u64)(stack + PAGE_SIZE);
 
-    get_cpu(cpu_id)->proc_list[get_cpu(cpu_id)->proc_pid] = proc;
-    get_cpu(cpu_id)->proc_pid++;
+    get_cpu(cpu_id)->proc_list[get_cpu(cpu_id)->proc_size] = proc;
+    sched_pid++;
+    get_cpu(cpu_id)->proc_size++;
     unlock();
 
     return proc;
@@ -51,21 +54,31 @@ void sched_kill() {
     unlock();
 }
 
+process* sched_get_proc(u64 pid) {
+    cpu_info* cpu;
+    for (u64 i = 0; i < smp_cpu_count; i++) {
+        cpu = get_cpu(i);
+        for (u64 j = 0; j < cpu->proc_size; j++)
+            if (cpu->proc_list[j]->PID == pid)
+                return cpu->proc_list[j];
+    }
+    return NULL;
+}
+
 void sched_remove_proc(u64 pid) {
-    process* proc = this_cpu()->proc_list[pid];
-    
+    process* proc = sched_get_proc(pid);
+    cpu_info* cpu = get_cpu(proc->cpu_id);
+
+    if (proc == NULL) {
+        serial_printf("Sched: Couldn't kill proc %lx not found.\n", pid);
+        return;
+    }
+
     vmm_destroy_pm(proc->pm);
     kfree((void*)(proc->regs.rsp - PAGE_SIZE));
     kfree(proc);
-    
-    this_cpu()->proc_list[pid] = NULL;
 
-    if (pid != this_cpu()->proc_pid) {
-        for (u64 i = pid; i < this_cpu()->proc_pid; i++) {
-            this_cpu()->proc_list[i] = this_cpu()->proc_list[i + 1];
-        }
-    }
-    this_cpu()->proc_pid--;
+    cpu->proc_size--;
     log_ok("Killed process %ld.\n", pid);
 }
 
@@ -79,11 +92,11 @@ void sched_switch(registers* regs) {
     vmm_switch_pm(this_cpu()->current_proc->pm);
 
     this_cpu()->proc_idx++;
-    if (this_cpu()->proc_idx == this_cpu()->proc_pid) {
+    if (this_cpu()->proc_idx == this_cpu()->proc_size) {
         this_cpu()->proc_idx = 0;
     }
     if (this_cpu()->proc_list[this_cpu()->proc_idx]->state == PROC_DEAD) {
-        sched_remove_proc(this_cpu()->proc_idx);
+        sched_remove_proc(this_cpu()->proc_list[this_cpu()->proc_idx]->PID);
         this_cpu()->proc_idx = 0;
     }
     unlock();

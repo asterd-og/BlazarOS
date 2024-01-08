@@ -25,7 +25,7 @@ void smp_init_cpu(struct limine_smp_info* smp_info) {
     cpu->lock = false;
     cpu->lapic_id = lapic_get_id();
 
-    cpu->proc_pid = 0;
+    cpu->proc_size = 0;
     cpu->proc_idx = 0;
     cpu->current_proc = NULL;
 

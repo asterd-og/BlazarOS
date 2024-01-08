@@ -25,7 +25,7 @@ typedef struct {
     u32 lapic_id;
     process* current_proc;
     process* proc_list[256];
-    u64 proc_pid;
+    u64 proc_size;
     u64 proc_idx;
 } __attribute__((packed)) cpu_info;
 

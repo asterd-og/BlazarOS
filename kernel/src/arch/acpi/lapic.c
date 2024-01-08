@@ -47,7 +47,5 @@ u64 lapic_get_base() {
 }
 
 void lapic_init() {
-    lapic_set_base(lapic_get_base());
-    lapic_write(0x80, 0); // enable interrupts
     lapic_write(0xf0, lapic_read(0xf0) | 0x100);
 }

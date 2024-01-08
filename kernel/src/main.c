@@ -95,6 +95,13 @@ void dumb_terminal() {
     }
 }
 
+void list_proc() {
+    for (u64 i = 0; i < sched_pid; i++) {
+        printf("Proc PID: %lx | CPU #: %x\n", i, sched_get_proc(i)->cpu_id);
+    }
+    return;
+}
+
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
 // linker script accordingly.
@@ -176,6 +183,7 @@ void _start(void) {
     keyboard_init();
 
     sched_init();
+    sched_new_proc(list_proc, 3);
     sched_new_proc(dumb_terminal, 1);
     pit_init();
 
