@@ -12,17 +12,17 @@ typedef struct {
     u16 resv_sectors; // Boot sector included!
     u8 fat_count; // Often 2
     u16 root_dir_count;
-    u16 logic_sectors_count;
+    u16 total_sectors_16;
     u8 media_desc_type;
-    u16 fat16_sect_count;
+    u16 table_size_16;
     u16 sectors_per_track;
     u16 heads_sides_count;
     u32 hidden_sectors_count;
-    u32 large_sectors_count; // Fat32 sectors count
+    u32 total_sectors_32; // Fat32 sectors count
 } __attribute__((packed)) fat32_bpb;
 
 typedef struct {
-    u32 sectors_per_fat; // The size of FAT in sectors
+    u32 table_size_32; // The size of FAT in sectors
     u16 flags;
     u16 fat_version; // High byte = major version | Low byte = minor version
     u32 root_cluster; // Often 2
@@ -35,8 +35,6 @@ typedef struct {
     u32 volume_id;
     char volume_label[11];
     char system_id[8];
-    u8 boot_code[420];
-    u16 boot_signature;
 } __attribute__((packed)) fat32_ebpb;
 
 typedef struct {
@@ -48,5 +46,26 @@ typedef struct {
     u8 resv1[12];
     u32 trail_signature;
 } __attribute__((packed)) fat32_info;
+
+typedef struct {
+    char name[11];
+    u8 attributes;
+    u8 resv;
+    
+    u8 creation_time_seconds;
+    u16 creation_time;
+    u16 creation_date;
+    
+    u16 last_accessed_date;
+    
+    u16 high_cluster_entry;
+    
+    u16 last_mod_time;
+    u16 last_mod_date;
+    
+    u16 low_cluster_entry;
+
+    u32 size;
+} __attribute__((packed)) fat32_dir;
 
 void fat32_init();

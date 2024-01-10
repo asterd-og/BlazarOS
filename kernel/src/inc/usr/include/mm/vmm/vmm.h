@@ -25,7 +25,7 @@ extern symbol data_end_ld;
 void vmm_init();
 
 page_map* vmm_new_pm();
-void vmm_destroy_pm();
+void vmm_destroy_pm(page_map* pm);
 
 void vmm_switch_pm(page_map* pm);
 

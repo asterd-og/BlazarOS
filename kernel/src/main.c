@@ -37,6 +37,8 @@
 
 #include <sched/sched.h>
 
+#include <fs/fat32.h>
+
 // Set the base revision to 1, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
 // See specification for further info.
@@ -182,6 +184,7 @@ void _start(void) {
     log_ok("SMP Initialised.\n");
 
     ata_init();
+    fat32_init();
 
     keyboard_init();
 
