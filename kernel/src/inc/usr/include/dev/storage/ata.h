@@ -21,9 +21,11 @@
 
 // I won't define the next two buses. Not needed
 
+extern u8 ata_read_buffer[512];
+
 void ata_init();
 
-void ata_read_one(u32 lba);
+void ata_read_one(u32 lba, u8* buffer);
 void ata_read_multiple(u32 lba, u8 sec_count, u8* buffer);
 
 void ata_write_one(u32 lba, u8* buffer);

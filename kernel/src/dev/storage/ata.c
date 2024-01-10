@@ -5,8 +5,7 @@
 // We will define later for primary or secondary
 u16 ata_io_base = 0;
 u8 ata_type = 0;
-char ata_read_buffer[512];
-char ata_write_buffer[512];
+u8 ata_read_buffer[512];
 u16 ata_status = 0;
 
 void ata_primary_irq(registers* regs) {
@@ -38,7 +37,7 @@ void ata_poll() {
     }
 }
 
-void ata_read_one(u32 lba) {
+void ata_read_one(u32 lba, u8* buffer) {
     outb(ata_io_base + 6, (ata_type == ATA_MASTER ? 0xE0 : 0xF0) | ((lba >> 24) & 0x0F)); // Set master/slave
     outb(ata_io_base + 1, ATA_WAIT); // Send wait
     outb(ata_io_base + 2, 1); // Sector count
@@ -47,25 +46,22 @@ void ata_read_one(u32 lba) {
     outb(ata_io_base + 5, (u8)(lba >> 16)); // 24-bit LBA addressing only for now
     outb(ata_io_base + 7, ATA_READ);
 
-    memset(ata_read_buffer, 0, 512);
     u16 val = 0;
 
     ata_poll();
 
     for (u16 i = 0; i < 256; i++) {
         val = inw(ata_io_base);
-        ata_read_buffer[i * 2] = val & 0xff;
-        ata_read_buffer[i * 2 + 1] = val >> 8;
+        buffer[i * 2] = val & 0xff;
+        buffer[i * 2 + 1] = val >> 8;
     }
 
     ata_delay();
 }
 
 void ata_read_multiple(u32 lba, u8 sec_count, u8* buffer) {
-    for (u32 i = lba; i < lba + sec_count; i++) {
-        ata_read_one(i);
-        memcpy(ata_read_buffer, buffer, 512);
-        buffer += 512;
+    for (u32 i = 0; i < sec_count; i++) {
+        ata_read_one(i + lba, (buffer + (i * 512)));
     }
 }
 
@@ -88,9 +84,8 @@ void ata_write_one(u32 lba, u8* buffer) {
 }
 
 void ata_write_multiple(u32 lba, u8 sec_count, u8* buffer) {
-    for (u32 i = lba; i < lba + sec_count; i++) {
-        ata_write_one(i, buffer);
-        buffer += 512;
+    for (u32 i = 0; i < sec_count; i++) {
+        ata_write_one(i + lba, (buffer + (i * 512)));
     }
 }
 
@@ -116,7 +111,9 @@ int ata_identify(u16 ata, u8 type) {
         if (status & 0x01) return 2;
     }
 
-    ata_read_one(0);
+    u8 buf[512];
+
+    ata_read_one(0, buf);
     
     return 0;
 }
