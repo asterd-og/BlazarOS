@@ -16,6 +16,8 @@
 
 #include <dev/initrd/blazfs.h>
 
+#include <dev/storage/ata.h>
+
 #include <arch/gdt/gdt.h>
 #include <arch/idt/idt.h>
 
@@ -85,21 +87,20 @@ void* get_mod_addr(int pos) {
     return module_request.response->modules[pos]->address;
 }
 
+void list_proc() {
+    for (u64 i = 0; i < sched_pid; i++) {
+        printf("Proc PID: %lx | CPU #: %lx\n", i, sched_get_proc(i)->cpu_id);
+    }
+    return;
+}
+
 void dumb_terminal() {
     char c = 0;
     while (1) {
         c = keyboard_get();
-        if (c != 0) {
+        if (c != 0)
             printf("%c", c);
-        }
     }
-}
-
-void list_proc() {
-    for (u64 i = 0; i < sched_pid; i++) {
-        printf("Proc PID: %lx | CPU #: %x\n", i, sched_get_proc(i)->cpu_id);
-    }
-    return;
 }
 
 // The following will be our kernel's entry point.
@@ -179,6 +180,8 @@ void _start(void) {
     }
 
     log_ok("SMP Initialised.\n");
+
+    ata_init();
 
     keyboard_init();
 

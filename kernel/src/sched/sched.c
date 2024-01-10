@@ -79,25 +79,26 @@ void sched_remove_proc(u64 pid) {
     kfree(proc);
 
     cpu->proc_size--;
-    log_ok("Killed process %ld.\n", pid);
+    log_ok("Killed process %ld in CPU %ld.\n", pid, cpu->lapic_id);
 }
 
 void sched_switch(registers* regs) {
     lock();
-    if (this_cpu()->current_proc != NULL) {
-        this_cpu()->current_proc->regs = *regs;
+    cpu_info* cpu = this_cpu();
+    if (cpu->current_proc != NULL) {
+        cpu->current_proc->regs = *regs;
     }
-    this_cpu()->current_proc = this_cpu()->proc_list[this_cpu()->proc_idx];
-    *regs = this_cpu()->current_proc->regs;
-    vmm_switch_pm(this_cpu()->current_proc->pm);
+    cpu->current_proc = cpu->proc_list[cpu->proc_idx];
+    *regs = cpu->current_proc->regs;
+    vmm_switch_pm(cpu->current_proc->pm);
 
-    this_cpu()->proc_idx++;
-    if (this_cpu()->proc_idx == this_cpu()->proc_size) {
-        this_cpu()->proc_idx = 0;
+    cpu->proc_idx++;
+    if (cpu->proc_idx == cpu->proc_size) {
+        cpu->proc_idx = 0;
     }
-    if (this_cpu()->proc_list[this_cpu()->proc_idx]->state == PROC_DEAD) {
-        sched_remove_proc(this_cpu()->proc_list[this_cpu()->proc_idx]->PID);
-        this_cpu()->proc_idx = 0;
+    if (cpu->proc_list[cpu->proc_idx]->state == PROC_DEAD) {
+        sched_remove_proc(cpu->proc_list[cpu->proc_idx]->PID);
+        cpu->proc_idx = 0;
     }
     unlock();
 }

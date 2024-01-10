@@ -36,11 +36,11 @@ run: run-kvm clean
 
 .PHONY: run-normal
 run-normal: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -s -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -no-reboot -no-shutdown -smp 4
+	qemu-system-x86_64 -s -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -no-reboot -no-shutdown -smp 4 -hda drive.txt
 
 .PHONY: run-kvm
 run-kvm: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -accel kvm -smp 4
+	qemu-system-x86_64 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -accel kvm -smp 4 -drive file="drive.txt",format=raw,index=0,media=disk
 
 .PHONY: run-uefi
 run-uefi: ovmf $(IMAGE_NAME).iso
