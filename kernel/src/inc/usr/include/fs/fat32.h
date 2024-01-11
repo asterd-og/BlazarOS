@@ -87,4 +87,12 @@ typedef struct {
     u32 file_count;
 } __attribute__((packed)) fat32_directory;
 
+extern fat32_directory* fat_root_dir;
+
 void fat32_init();
+
+int fat32_read(const char* filename, u8* buffer);
+
+fat32_directory* fat32_traverse_dir(fat32_directory* root_dir, const char* dirname);
+
+char* fat32_get_name(fat32_entry entry);

@@ -153,12 +153,6 @@ void _start(void) {
     }
     log_ok("BlazFS Initialised.\n");
 
-    char* buf = (char*)kmalloc(blazfs_ftell("file.txt"));
-    blazfs_read("file.txt", buf);
-
-    log_info("BlazFS: file.txt size = %d.\n", blazfs_ftell("file.txt"));
-    log_info("BlazFS: file.txt contents = '%s'.\n", buf);
-
     u32 rsdt_addr = acpi_init();
     if (rsdt_addr > 0) {
         log_info("ACPI: RSDT found at %lx.\n", rsdt_addr);
@@ -185,6 +179,30 @@ void _start(void) {
 
     ata_init();
     fat32_init();
+
+    printf("Listing root:\n");
+
+    for (u32 i = 0; i < fat_root_dir->file_count; i++) {
+        char* name = fat32_get_name(fat_root_dir->entries[i]);
+        if (fat_root_dir->entries[i].attributes & FAT_ATTR_DIRECTORY) printf("\x1b[1;34;32m'%s'\x1b[1;34;0m ", name);
+        else printf("\x1b[1;34;36m'%s'\x1b[1;34;0m ", name);
+        kfree(name);
+    }
+
+    printf("\nListing HEHE:\n");
+
+    fat32_directory* hehe_dir = fat32_traverse_dir(fat_root_dir, "HEHE");
+
+    for (u32 i = 0; i < hehe_dir->file_count; i++) {
+        char* name = fat32_get_name(hehe_dir->entries[i]);
+        if (hehe_dir->entries[i].attributes & FAT_ATTR_DIRECTORY) printf("\x1b[1;34;32m'%s'\x1b[1;34;0m ", name);
+        else printf("\x1b[1;34;36m'%s'\x1b[1;34;0m ", name);
+        kfree(name);
+    }
+
+    char* buf = kmalloc(1024);
+    fat32_read("HEHE/LMAO.LOL", buf);
+    printf("\nHEHE/LMAO.LOL: %s\n", buf);
 
     keyboard_init();
 

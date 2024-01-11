@@ -173,6 +173,24 @@ int fat32_read(const char* filename, u8* buffer) {
     return 0;
 }
 
+char* fat32_get_name(fat32_entry entry) {
+    char* name = kmalloc(13);
+    memset(name, 0, 13);
+    u8 i = 0;
+    u8 j = 0;
+    for (; i < 8; i++) {
+        if (entry.name[i] == 0x20 || entry.name[i] == 0x10) break;
+        name[i] = entry.name[i];
+    }
+    if (!(entry.attributes & FAT_ATTR_DIRECTORY)) name[i] = '.';
+    i++;
+    for (; j < 3; j++) {
+        if (entry.ext[j] == 0x20 || entry.name[i] == 0x10) break;
+        name[j + i] = entry.ext[j];
+    }
+    return name;
+}
+
 void fat32_init() {
     u8* mem = kmalloc(512);
     ata_read_multiple(0, 1, mem);
