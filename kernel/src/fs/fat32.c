@@ -28,6 +28,7 @@ int fat32_read(const char* filename, u8* buffer) {
         name[i] = filename[i];
     }
     name[i] = 0;
+    u8 fname_len = i;
     i++;
     u8 j = 0;
     for (; j < 3; j++)
@@ -36,18 +37,21 @@ int fat32_read(const char* filename, u8* buffer) {
     serial_printf("Filename: '%s' Ext: '%s'.\n", name, ext);
 
     for (u32 i = 0; i < fat_file_count; i++) {
-        if (!memcmp(name, fat_entries[i].name, i - 1) &&
+        if (!memcmp(name, fat_entries[i].name, fname_len) &&
             !memcmp(ext, fat_entries[i].ext, j)) {
             if ((fat_entries[i].attributes & FAT_ATTR_DIRECTORY) == FAT_ATTR_DIRECTORY) return 2;
             u32 file_cluster = ((u32)fat_entries[i].high_cluster_entry << 16) | ((u32)fat_entries[i].low_cluster_entry);
             u32 file_sector = fat32_get_sector(file_cluster);
 
             if (fat_entries[i].size > 512) {
-                u8 sec_count = ALIGN_UP(fat_entries[i].size, 512);
+                u32 sec_count = ALIGN_UP(fat_entries[i].size, 512);
                 sec_count /= 512;
+                serial_printf("Reading %d sectors.\n", sec_count);
                 ata_read_multiple(file_sector, sec_count, buffer);
-            } else
+            } else {
                 ata_read_multiple(file_sector, 1, buffer);
+            }
+            
             buffer[fat_entries[i].size] = 0;
             return 0;
         }
@@ -94,6 +98,10 @@ void fat32_init() {
     ata_read_multiple(fat_root_sector, 1, dir_buffer);
     for (u32 i = 0; i < fat_file_count; i++) {
         memcpy(&fat_entries[i], dir_buffer + (i * sizeof(fat32_dir)), sizeof(fat32_dir));
+    }
+
+    for (u32 i = 0; i < fat_file_count; i++) {
+        log_info("Found file '%s' size: %d.\n", fat_entries[i].name, fat_entries[i].size);
     }
 
     u8 buffer[1024];
