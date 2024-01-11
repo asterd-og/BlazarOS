@@ -59,7 +59,7 @@ void ata_read_one(u32 lba, u8* buffer) {
     ata_delay();
 }
 
-void ata_read_multiple(u32 lba, u8 sec_count, u8* buffer) {
+void ata_read_multiple(u32 lba, u32 sec_count, u8* buffer) {
     for (u32 i = 0; i < sec_count; i++) {
         ata_read_one(i + lba, (buffer + (i * 512)));
     }
@@ -83,7 +83,7 @@ void ata_write_one(u32 lba, u8* buffer) {
     ata_delay();
 }
 
-void ata_write_multiple(u32 lba, u8 sec_count, u8* buffer) {
+void ata_write_multiple(u32 lba, u32 sec_count, u8* buffer) {
     for (u32 i = 0; i < sec_count; i++) {
         ata_write_one(i + lba, (buffer + (i * 512)));
     }

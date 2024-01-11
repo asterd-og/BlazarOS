@@ -79,6 +79,12 @@ typedef struct {
     u16 low_cluster_entry;
 
     u32 size;
-} __attribute__((packed)) fat32_dir;
+} __attribute__((packed)) fat32_entry;
+
+typedef struct {
+    fat32_entry own_entry;
+    fat32_entry* entries;
+    u32 file_count;
+} __attribute__((packed)) fat32_directory;
 
 void fat32_init();

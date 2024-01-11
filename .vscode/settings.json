@@ -24,7 +24,8 @@
         "idt.h": "c",
         "limine.h": "c",
         "hpet.h": "c",
-        "fat32.h": "c"
+        "fat32.h": "c",
+        "typeinfo": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

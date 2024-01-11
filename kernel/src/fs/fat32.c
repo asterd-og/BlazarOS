@@ -10,13 +10,76 @@ u32 fat_file_count = 0;
 fat32_bpb* fat_bpb;
 fat32_ebpb* fat_ebpb;
 
-fat32_dir* fat_entries;
+fat32_directory* fat_root_dir;
+fat32_entry* fat_entries;
+
+fat32_directory* fat_directories_cache;
 
 u32 fat32_get_sector(u32 cluster) {
-    return fat_data_sector + fat_bpb->sectors_per_cluster * (cluster - 2);
+    return ((cluster - 2) * fat_bpb->sectors_per_cluster) + fat_data_sector;
 }
 
-int fat32_read(const char* filename, u8* buffer) {
+fat32_directory* fat32_traverse_dir(fat32_directory* root_dir, const char* dirname) {
+    for (u32 i = 0; i < root_dir->file_count; i++) {
+        if (!memcmp(dirname, root_dir->entries[i].name, strlen(dirname))) {
+            fat32_entry entry = root_dir->entries[i];
+            if ((entry.attributes & FAT_ATTR_DIRECTORY) != FAT_ATTR_DIRECTORY) return NULL;
+            u32 dir_cluster = ((u32)entry.high_cluster_entry << 16) | ((u32)entry.low_cluster_entry);
+            u32 dir_sector = fat32_get_sector(dir_cluster);
+            
+            u8* mem = kmalloc(512);
+            ata_read_multiple(dir_sector, 1, mem);
+            
+            fat32_entry* dir_entry;
+            
+            u32 loc = 0;
+            u32 sector_count = 0;
+            u32 file_count = 0;
+
+            while (true) {
+                if (loc * sizeof(fat32_entry) >= 512) {
+                    loc = 0;
+                    ata_read_multiple(dir_sector + sector_count, 1, mem);
+                }
+                dir_entry = (fat32_entry*)(mem + (loc * sizeof(fat32_entry)));
+                if (dir_entry->name[0] == 0) break;
+                loc++;
+                if (dir_entry->attributes & FAT_ATTR_HIDDEN)
+                    continue;
+                file_count++;
+            }
+
+            fat32_directory* dir = kmalloc(sizeof(fat32_directory));
+
+            loc = 0;
+            sector_count = 0;
+            memset(mem, 0, 512);
+            dir->file_count = file_count;
+            dir->entries = (fat32_entry*)kmalloc(sizeof(fat32_entry) * dir->file_count);
+            ata_read_multiple(dir_sector, 1, mem);
+
+            for (u32 j = 0; j < dir->file_count;) {
+                if (loc * sizeof(fat32_entry) >= 512) {
+                    loc = 0;
+                    ata_read_multiple(dir_sector + sector_count, 1, mem);
+                }
+                dir_entry = (fat32_entry*)(mem + (loc * sizeof(fat32_entry)));
+                loc++;
+                if (dir_entry->attributes & FAT_ATTR_HIDDEN)
+                    continue;
+                memcpy(&dir->entries[j], dir_entry, sizeof(fat32_entry));
+                j++;
+            }
+
+            kfree(mem);
+
+            return dir;
+        }
+    }
+    return NULL;
+}
+
+fat32_entry fat32_get_entry(fat32_directory* working_dir, const char* filename) {
     char name[9];
     char ext[4];
 
@@ -33,30 +96,81 @@ int fat32_read(const char* filename, u8* buffer) {
     u8 j = 0;
     for (; j < 3; j++)
         ext[j] = filename[i + j];
-
-    serial_printf("Filename: '%s' Ext: '%s'.\n", name, ext);
-
-    for (u32 i = 0; i < fat_file_count; i++) {
-        if (!memcmp(name, fat_entries[i].name, fname_len) &&
-            !memcmp(ext, fat_entries[i].ext, j)) {
-            if ((fat_entries[i].attributes & FAT_ATTR_DIRECTORY) == FAT_ATTR_DIRECTORY) return 2;
-            u32 file_cluster = ((u32)fat_entries[i].high_cluster_entry << 16) | ((u32)fat_entries[i].low_cluster_entry);
-            u32 file_sector = fat32_get_sector(file_cluster);
-
-            if (fat_entries[i].size > 512) {
-                u32 sec_count = ALIGN_UP(fat_entries[i].size, 512);
-                sec_count /= 512;
-                serial_printf("Reading %d sectors.\n", sec_count);
-                ata_read_multiple(file_sector, sec_count, buffer);
-            } else {
-                ata_read_multiple(file_sector, 1, buffer);
-            }
-            
-            buffer[fat_entries[i].size] = 0;
-            return 0;
+ 
+    for (u32 i = 0; i < working_dir->file_count; i++) {
+        if (!memcmp(name, working_dir->entries[i].name, fname_len) &&
+            !memcmp(ext, working_dir->entries[i].ext, j)) {
+            fat32_entry entry = working_dir->entries[i];
+            if ((entry.attributes & FAT_ATTR_DIRECTORY) == FAT_ATTR_DIRECTORY) break;
+            return entry;
         }
     }
-    return 1;
+
+    return (fat32_entry){0};
+}
+
+fat32_entry fat32_traverse_path(char* path) {
+    int i = 0;
+    int file_count = 0;
+    for (i = 0; i < strlen(path); i++) {
+        if (path[i] == '/') file_count++;
+    }
+
+    i = 0;
+
+    char** arr = (char**)kmalloc(file_count * 8 + file_count);
+    char* p = strtok(path, "/");
+
+    while (p != NULL) {
+        arr[i++] = p;
+        p = strtok(NULL, "/");
+    }
+
+    fat32_directory* dir = fat_root_dir;
+
+    for (u32 j = 0; j < i - 1; j++) {
+        dir = fat32_traverse_dir(dir, arr[j]);
+    }
+    
+    fat32_entry entry = fat32_get_entry(dir, arr[i - 1]);
+
+    kfree(arr);
+
+    return entry;
+}
+
+int fat32_read(const char* filename, u8* buffer) {
+    fat32_directory* working_dir = fat_root_dir;
+    fat32_entry entry;
+    bool in_dir = false;
+    
+    for (u32 i = 0; i < strlen(filename); i++) {
+        if (filename[i] == '/') {
+            char* name = kmalloc(strlen(filename));
+            memcpy(name, filename, strlen(filename));
+            entry = fat32_traverse_path(name);
+            kfree(name);
+            in_dir = true;
+        }
+    }
+
+    if (!in_dir) entry = fat32_get_entry(fat_root_dir, filename);
+
+    if (entry.name[0] == 0) return 1;
+    
+    u32 num_sectors = 1;
+    u32 file_cluster = ((u32)entry.high_cluster_entry << 16)
+                        | ((u32)entry.low_cluster_entry);
+    u32 file_sector = fat32_get_sector(file_cluster);
+
+    if (entry.size > 512) {
+        num_sectors = ALIGN_UP(entry.size, 512);
+        num_sectors /= 512;
+    }
+
+    ata_read_multiple(file_sector, num_sectors, buffer);
+
+    return 0;
 }
 
 void fat32_init() {
@@ -81,36 +195,45 @@ void fat32_init() {
 
     u8* mem2 = kmalloc(512);
     ata_read_multiple(fat_root_sector, 1, mem2);
-    fat32_dir* dir;
+    fat32_entry* dir;
+    fat_root_dir = (fat32_directory*)kmalloc(sizeof(fat32_directory));
     u32 loc = 0;
     u32 sector_count = 0;
+    fat_file_count = 0;
 
     while (true) {
-        dir = (fat32_dir*)(mem2 + (loc * sizeof(fat32_dir)));
-        if (dir->name[0] == 0) break;
-        fat_file_count++;
+        if (loc * sizeof(fat32_entry) >= 512) {
+            loc = 0;
+            ata_read_multiple(fat_root_sector + sector_count, 1, mem2);
+        }
+        dir = (fat32_entry*)(mem2 + (loc * sizeof(fat32_entry)));
         loc++;
+        if (dir->name[0] == 0) break;
+        if (dir->attributes & FAT_ATTR_HIDDEN)
+            continue;
+        fat_file_count++;
     }
 
-    fat_entries = (fat32_dir*)kmalloc(sizeof(fat32_dir) * fat_file_count);
+    fat_entries = (fat32_entry*)kmalloc(sizeof(fat32_entry) * fat_file_count);
+    fat_root_dir->file_count = fat_file_count;
+    fat_root_dir->entries = (fat32_entry*)kmalloc(sizeof(fat32_entry) * fat_file_count);
 
-    u8* dir_buffer = kmalloc(512);
-    ata_read_multiple(fat_root_sector, 1, dir_buffer);
-    for (u32 i = 0; i < fat_file_count; i++) {
-        memcpy(&fat_entries[i], dir_buffer + (i * sizeof(fat32_dir)), sizeof(fat32_dir));
-    }
+    memset(mem2, 0, 512);
 
-    for (u32 i = 0; i < fat_file_count; i++) {
-        log_info("Found file '%s' size: %d.\n", fat_entries[i].name, fat_entries[i].size);
-    }
+    loc = 0;
+    sector_count = 0;
 
-    u8 buffer[1024];
-    int status = fat32_read("HEY.TXT", buffer);
-    if (status == 1) {
-        log_bad("Couldn't find HEY.TXT!\n");
-    } else if (status == 2) {
-        log_bad("Not a file!\n");
-    } else {
-        log_info("Found HEY.TXT: %s", buffer);
+    ata_read_multiple(fat_root_sector, 1, mem2);
+    
+    for (u32 j = 0; j < fat_root_dir->file_count;) {
+        if (loc * sizeof(fat32_entry) >= 512) {
+            loc = 0;
+            ata_read_multiple(fat_root_sector + sector_count, 1, mem2);
+        }
+        dir = (fat32_entry*)(mem2 + (loc * sizeof(fat32_entry)));
+        loc++;
+        if (dir->attributes & FAT_ATTR_HIDDEN) continue;
+        memcpy(&fat_root_dir->entries[j], dir, sizeof(fat32_entry));
+        j++;
     }
 }
