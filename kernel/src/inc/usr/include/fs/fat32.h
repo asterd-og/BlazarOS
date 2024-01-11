@@ -4,6 +4,14 @@
 
 #include <dev/storage/ata.h>
 
+#define FAT_ATTR_READ_ONLY 0x01
+#define FAT_ATTR_HIDDEN 0x02
+#define FAT_ATTR_SYSTEM 0x04
+#define FAT_ATTR_VOLUME_ID 0x08
+#define FAT_ATTR_DIRECTORY 0x10
+#define FAT_ATTR_ARCHIVE 0x20 // long file name
+#define FAT_ATTR_LFN 0x01 | 0x02 | 0x04 | 0x08 // long file name
+
 typedef struct {
     u8 jmp[3];
     u8 oem[8];
@@ -19,6 +27,9 @@ typedef struct {
     u16 heads_sides_count;
     u32 hidden_sectors_count;
     u32 total_sectors_32; // Fat32 sectors count
+
+    // Microsoft docs says that this will be casted into the EBPB
+    u8 extended_section[54];
 } __attribute__((packed)) fat32_bpb;
 
 typedef struct {
@@ -48,7 +59,9 @@ typedef struct {
 } __attribute__((packed)) fat32_info;
 
 typedef struct {
-    char name[11];
+    char name[8];
+    char ext[3];
+
     u8 attributes;
     u8 resv;
     
