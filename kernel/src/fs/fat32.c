@@ -281,7 +281,31 @@ int fat32_read(const char* filename, u8* buffer) {
 
 u32 fat32_allocate_cluster() {
     if (fat_info->available_cluster_num != 0xFFFFFFFF)
-        return fat_info->available_cluster_num;
+        u32 ret = fat_info->available_cluster_num;
+        u32 sector = fat32_get_sector(fat_info->available_cluster_num + 1);
+        // Find next available cluster
+        u8* cluster_buf = kmalloc(512);
+
+        memset(cluster_buf, 0, 512);
+        ata_read_multiple(sector, 1, cluster_buf);
+
+        if (cluster_buf[0] != 0x00000000) {
+            fat_info->available_cluster_num++;
+            while (cluster_buf[0] != 0x00000000) {
+                sector = fat32_get_sector(fat_info->available_cluster_num);
+                ata_read_multiple(sector)
+                fat_info->available_cluster_num++;
+            }
+            // Found free cluster!
+        } else {
+            fat_info->available_cluster_num++;
+        }
+
+        kfree(cluster_buf);
+        ata_write_multiple(fat_ebpb->fsinfo_sector, 1, fat_info);
+        // Flush fsinfo
+
+        return ret;
     else {
         if (fat_info->free_cluster_count == 0) return 0;
         for (u32 i = 2; i < fat_info->free_cluster_count; i++) {
