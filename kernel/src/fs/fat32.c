@@ -21,6 +21,9 @@ u32 fat32_get_sector(u32 cluster) {
     return ((cluster - 2) * fat_bpb->sectors_per_cluster) + fat_data_sector;
 }
 
+// TODO: Add directories cache and optimize write functions
+// To not rewrite the entire directory table
+
 char* fat32_process_name(fat32_entry* entry) {
     char* name = kmalloc(11);
     u8 i = 0;
@@ -230,6 +233,15 @@ int fat32_find_last_name(const char* path) {
     return i;
 }
 
+fat32_entry* fat32_find_entry(fat32_directory* working_dir, const char* filename) {
+    for (u32 i = 0; i < working_dir->file_count; i++) {
+        if (!memcmp(filename, working_dir->entries[i].name, strlen(filename))) {
+            return &working_dir->entries[i];
+        }
+    }
+    return NULL;
+}
+
 int fat32_read(const char* filename, u8* buffer) {
     fat32_entry entry;
     bool in_dir = false;
@@ -279,13 +291,44 @@ u32 fat32_allocate_cluster() {
     }
 }
 
+void fat32_rewrite_directories(fat32_directory* working_dir) {
+    u32 root_sect_count = 1;
+    if (working_dir->file_count * sizeof(fat32_entry) > 512) {
+        root_sect_count = ALIGN_UP(working_dir->file_count * sizeof(fat32_entry), 512);
+        root_sect_count /= 512;
+    }
+
+    u8* copy_buf = kmalloc(root_sect_count * 512);
+    memcpy(copy_buf, working_dir->entries, (working_dir->file_count * sizeof(fat32_entry)));
+
+    ata_write_multiple(working_dir->sector, root_sect_count, copy_buf);
+
+    kfree(copy_buf);   
+}
+
+void fat32_cleanup_clusters(u32 cluster, u32 size) {
+    u32 sect_count = 1;
+    if (size > 512) {
+        sect_count = ALIGN_UP(size, 512):
+        sect_count /= 512;
+    }
+
+    u32 sector = fat32_get_sector(cluster);
+
+    u8* buffer = kmalloc(sect_count * 512);
+    memset(buffer, 0, sect_count * 512);
+
+    ata_write_multiple(sector, sect_count, buffer);
+
+    kfree(buffer);
+}
+
 /*
 NOTE: FAT32_WRITE'S BUFFER ARGUMENT, HAS TO BE AN ALLOCATED
 U8 WITH A MULTIPLE OF 512 BYTES IN SIZE! OR ELSE IT COULD
 POINT TO ANOTHER FILE (Because of how sectors works)
 */
 
-// TODO: Fix writing inside dir
 int fat32_write(const char* filename, u8* buffer, u32 size, u8 attributes) {
     fat32_directory* working_dir = fat_root_dir;
     char* fname = kmalloc(11);
@@ -331,28 +374,72 @@ int fat32_write(const char* filename, u8* buffer, u32 size, u8 attributes) {
             sec_count /= 512;
         }
 
-        u8 root_sect_count = 1;
-        if (working_dir->file_count * sizeof(fat32_entry) > 512) {
-            root_sect_count = ALIGN_UP(working_dir->file_count * sizeof(fat32_entry), 512);
-            root_sect_count /= 512;
-        }
-
         entry->high_cluster_entry = (u16)(cluster >> 16);
         entry->low_cluster_entry = (u16)(cluster & 0xFFFF);
 
         entry->size = size;
 
-        u8* copy_buf = kmalloc(root_sect_count * 512);
-        memcpy(copy_buf, working_dir->entries, (working_dir->file_count * sizeof(fat32_entry)));
-
-        ata_write_multiple(working_dir->sector, root_sect_count, copy_buf);
         ata_write_multiple(fat32_get_sector(cluster), sec_count, buffer);
-
-        kfree(copy_buf);
+        fat32_rewrite_directories(working_dir);
         return 0;
     }
     kfree(fname);
     return 1;
+}
+
+int fat32_overwrite(const char* filename, u8* buffer, u32 size, u8 attributes) {
+    fat32_directory* working_dir = fat_root_dir;
+    char* fname = kmalloc(11);
+    memset(fname, 0, 11);
+    memcpy(fname, filename, 11);
+    for (int i = 0; i < strlen(filename); i++) {
+        if (filename[i] == '/') {
+            char* name = kmalloc(strlen(filename));
+            memcpy(name, filename, strlen(filename));
+            working_dir = fat32_find_subdir(name);
+            int last_name = fat32_find_last_name(filename);
+            memcpy(fname, filename + last_name, strlen(filename) - last_name);
+            kfree(name);
+        }
+    }
+
+    char* entry_name = fat32_unprocess_name(fname);
+    fat32_entry* entry = fat32_find_entry(working_dir, entry_name);
+    kfree(entry_name);
+
+    if (entry->name[0] == 0) return 1;
+
+    u32 sect_count = 1;
+
+    if (size > 512) {
+        sect_count = ALIGN_UP(size, 512);
+        sect_count /= 512;
+    }
+
+    u32 sector = 0;
+
+    if (entry->size <= size) {
+        // We can just reuse entry's cluster.
+        u32 cluster = ((u32)entry->high_cluster_entry << 16)
+                    | ((u32)entry->low_cluster_entry);
+        
+        sector = fat32_get_sector(cluster);
+    } else {
+        // Allocate new fat32 cluster to use that.
+        u32 old_cluster = ((u32)entry->high_cluster_entry << 16)
+                    | ((u32)entry->low_cluster_entry);
+        fat32_cleanup_clusters(old_cluster);
+
+        u32 cluster = fat32_allocate_cluster();
+        sector = fat32_get_sector(cluster);
+
+        entry->high_cluster_entry = (u16)(cluster >> 16);
+        entry->low_cluster_entry = (u16)(cluster & 0xFFFF);     
+    }
+
+    entry->size = size;
+    ata_write_multiple(sector, sect_count, buffer);
+    fat32_rewrite_directories(working_dir);
 }
 
 void fat32_init() {
@@ -431,16 +518,5 @@ void fat32_init() {
     
         memcpy(&fat_root_dir->entries[j], dir, sizeof(fat32_entry));
         j++;
-    }
-
-    printf("Reading from /hey.txt\n");
-
-    u8* buffer = kmalloc(1024);
-    memset(buffer, 0, 1024);
-    fat32_read("hey.txt", buffer);
-    printf("'%s'\n", buffer);
-    for (int i = 0; i < 1024; i++) {
-        serial_printf("%x ", buffer[i]);
-        if ((i % 10) == 0) serial_printf("\n");
     }
 }
