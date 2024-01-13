@@ -208,7 +208,7 @@ fat32_directory* fat32_find_subdir(char* path) {
 
     fat32_directory* dir = fat_root_dir;
 
-    for (int j = 0; j < file_count; j++) {
+    for (u32 j = 0; j < file_count; j++) {
         char* pt = fat32_unprocess_name(arr[j]);
         dir = fat32_traverse_dir(dir, pt);
         kfree(pt);
@@ -219,6 +219,15 @@ fat32_directory* fat32_find_subdir(char* path) {
     serial_printf("Inside dir: '%s'\n", dir->own_entry.name);
 
     return dir;
+}
+
+int fat32_find_last_name(const char* path) {
+    int i = strlen(path);
+    while (path[i] != '/') {
+        i--;
+    }
+    i++;
+    return i;
 }
 
 int fat32_read(const char* filename, u8* buffer) {
@@ -279,11 +288,16 @@ POINT TO ANOTHER FILE (Because of how sectors works)
 // TODO: Fix writing inside dir
 int fat32_write(const char* filename, u8* buffer, u32 size, u8 attributes) {
     fat32_directory* working_dir = fat_root_dir;
+    char* fname = kmalloc(11);
+    memset(fname, 0, 11);
+    memcpy(fname, filename, 11);
     for (int i = 0; i < strlen(filename); i++) {
         if (filename[i] == '/') {
             char* name = kmalloc(strlen(filename));
             memcpy(name, filename, strlen(filename));
             working_dir = fat32_find_subdir(name);
+            int last_name = fat32_find_last_name(filename);
+            memcpy(fname, filename + last_name, strlen(filename) - last_name);
             kfree(name);
         }
     }
@@ -296,10 +310,11 @@ int fat32_write(const char* filename, u8* buffer, u32 size, u8 attributes) {
         // Directory entry free!
         fat32_entry* entry = &working_dir->entries[i];
 
-        char* fname = fat32_unprocess_name(filename);
+        char* entry_name = fat32_unprocess_name(fname);
 
-        memcpy(entry->name, fname, 11);
-        
+        memcpy(entry->name, entry_name, 11);
+
+        kfree(entry_name);
         kfree(fname);
         entry->attributes = attributes;
 
@@ -327,11 +342,17 @@ int fat32_write(const char* filename, u8* buffer, u32 size, u8 attributes) {
 
         entry->size = size;
 
-        ata_write_multiple(working_dir->sector, root_sect_count, (u8*)working_dir->entries);
+        u8* copy_buf = kmalloc(root_sect_count * 512);
+        memcpy(copy_buf, working_dir->entries, (working_dir->file_count * sizeof(fat32_entry)));
+
+        ata_write_multiple(working_dir->sector, root_sect_count, copy_buf);
         ata_write_multiple(fat32_get_sector(cluster), sec_count, buffer);
-        break;
+
+        kfree(copy_buf);
+        return 0;
     }
-    return 0;
+    kfree(fname);
+    return 1;
 }
 
 void fat32_init() {
@@ -412,21 +433,14 @@ void fat32_init() {
         j++;
     }
 
-    printf("Reading from hehe/lmao.lol\n");
+    printf("Reading from /hey.txt\n");
 
-    u8* buffer = kmalloc(512);
-    memset(buffer, 0, 512);
-    fat32_read("hehe/lmao.lol", buffer);
+    u8* buffer = kmalloc(1024);
+    memset(buffer, 0, 1024);
+    fat32_read("hey.txt", buffer);
     printf("'%s'\n", buffer);
-    
-    printf("Writing to hehe/test.txt\n");
-    u8* buffer2 = kmalloc(512);
-    char* str = "WRitten FILES!\n";
-    memcpy(buffer2, str, strlen(str));
-    fat32_write("hehe/test.txt", buffer2, 256, 0);
-    
-    printf("Reading from hehe/test.txt\n");
-    memset(buffer, 0, 512);
-    fat32_read("hehe/test.txt", buffer);
-    printf("'%s'\n", buffer);
+    for (int i = 0; i < 1024; i++) {
+        serial_printf("%x ", buffer[i]);
+        if ((i % 10) == 0) serial_printf("\n");
+    }
 }
