@@ -200,30 +200,6 @@ void _start(void) {
     ata_init();
     fat32_init();
 
-    /*printf("Listing root:\n");
-
-    for (u32 i = 0; i < fat_root_dir->file_count; i++) {
-        char* name = fat_root_dir->entries[i].name;
-        if (fat_root_dir->entries[i].attributes & FAT_ATTR_DIRECTORY) printf("\x1b[1;34;32m'%s'\x1b[1;34;0m ", name);
-        else printf("\x1b[1;34;36m'%s'\x1b[1;34;0m ", name);
-    }
-
-    printf("\nListing HEHE:\n");
-
-    fat32_directory* hehe_dir = fat32_traverse_dir(fat_root_dir, "HEHE");
-
-    if (hehe_dir != NULL) {
-        for (u32 i = 0; i < hehe_dir->file_count; i++) {
-            char* name = hehe_dir->entries[i].name;
-            if (hehe_dir->entries[i].attributes & FAT_ATTR_DIRECTORY) printf("\x1b[1;34;32m'%s'\x1b[1;34;0m ", name);
-            else printf("\x1b[1;34;36m'%s'\x1b[1;34;0m ", name);
-        }
-    }*/
-
-    //u8* buf = kmalloc(1024);
-    //fat32_read("HEHE/LMAO.LOL", buf);
-    //printf("\nreading HEHE/LMAO.LOL: %s\n", buf);
-
     keyboard_init();
 
     sched_init();
