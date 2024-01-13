@@ -10,3 +10,5 @@ int memcmp(const void *s1, const void *s2, size_t n);
 int strcmp(const char* str, const char* str2);
 int strlen(const char* str);
 char* strtok(char* str, const char* delim);
+
+int toupper(int c);

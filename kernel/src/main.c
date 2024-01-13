@@ -28,6 +28,7 @@
 
 #include <arch/smp/smp.h>
 
+#include <flanterm/colors.h>
 #include <flanterm/flanterm.h>
 #include <flanterm/backends/fb.h>
 
@@ -98,10 +99,29 @@ void list_proc() {
 
 void dumb_terminal() {
     char c = 0;
+    printf(COL_WHITE "[" COL_YELLOW "root " COL_GREEN "/" COL_WHITE "]\n" COL_GREEN "# " COL_WHITE);
+    int i = 0;
     while (1) {
         c = keyboard_get();
-        if (c != 0)
-            printf("%c", c);
+        if (c != 0) {
+            switch (c) {
+                case '\n':
+                    printf("\n");
+                    printf(COL_WHITE "[" COL_YELLOW "root " COL_GREEN "/" COL_WHITE "]\n" COL_GREEN "# " COL_WHITE);
+                    i = 0;
+                    break;
+                case '\b':
+                    if (i > 0) {
+                        printf("\b \b");
+                        i--;
+                    }
+                    break;
+                default:
+                    printf("%c", c);
+                    i++;
+                    break;
+            }
+        }
     }
 }
 
@@ -180,29 +200,29 @@ void _start(void) {
     ata_init();
     fat32_init();
 
-    printf("Listing root:\n");
+    /*printf("Listing root:\n");
 
     for (u32 i = 0; i < fat_root_dir->file_count; i++) {
-        char* name = fat32_get_name(fat_root_dir->entries[i]);
+        char* name = fat_root_dir->entries[i].name;
         if (fat_root_dir->entries[i].attributes & FAT_ATTR_DIRECTORY) printf("\x1b[1;34;32m'%s'\x1b[1;34;0m ", name);
         else printf("\x1b[1;34;36m'%s'\x1b[1;34;0m ", name);
-        kfree(name);
     }
 
     printf("\nListing HEHE:\n");
 
     fat32_directory* hehe_dir = fat32_traverse_dir(fat_root_dir, "HEHE");
 
-    for (u32 i = 0; i < hehe_dir->file_count; i++) {
-        char* name = fat32_get_name(hehe_dir->entries[i]);
-        if (hehe_dir->entries[i].attributes & FAT_ATTR_DIRECTORY) printf("\x1b[1;34;32m'%s'\x1b[1;34;0m ", name);
-        else printf("\x1b[1;34;36m'%s'\x1b[1;34;0m ", name);
-        kfree(name);
-    }
+    if (hehe_dir != NULL) {
+        for (u32 i = 0; i < hehe_dir->file_count; i++) {
+            char* name = hehe_dir->entries[i].name;
+            if (hehe_dir->entries[i].attributes & FAT_ATTR_DIRECTORY) printf("\x1b[1;34;32m'%s'\x1b[1;34;0m ", name);
+            else printf("\x1b[1;34;36m'%s'\x1b[1;34;0m ", name);
+        }
+    }*/
 
-    char* buf = kmalloc(1024);
-    fat32_read("HEHE/LMAO.LOL", buf);
-    printf("\nHEHE/LMAO.LOL: %s\n", buf);
+    //u8* buf = kmalloc(1024);
+    //fat32_read("HEHE/LMAO.LOL", buf);
+    //printf("\nreading HEHE/LMAO.LOL: %s\n", buf);
 
     keyboard_init();
 

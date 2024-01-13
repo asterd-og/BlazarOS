@@ -58,6 +58,14 @@ ovmf:
 	mkdir -p ovmf
 	cd ovmf && curl -Lo OVMF.fd https://retrage.github.io/edk2-nightly/bin/RELEASEX64_OVMF.fd
 
+restore_fat:
+	-sudo umount mnt
+	rm -fdr fat.img
+	cp fat.backup fat.img
+	sudo mount fat.img mnt
+	ls mnt
+	sudo umount mnt
+
 limine:
 	git clone https://github.com/limine-bootloader/limine.git --branch=v6.x-branch-binary --depth=1
 	$(MAKE) -C limine \
