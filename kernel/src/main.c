@@ -155,28 +155,28 @@ void _start(void) {
     );
 
     serial_init();
-    log_ok("Serial Initialised.\n");
+    serial_printf("Serial Initialised.\n");
 
     gdt_init();
-    log_ok("GDT Initialised.\n");
+    serial_printf("GDT Initialised.\n");
 
     idt_init();
     pic_disable();
-    log_ok("IDT Initialised.\n");
+    serial_printf("IDT Initialised.\n");
 
     log_info("HHDM is %lx\n", hhdm_offset);
 
     pmm_init();
-    log_ok("PMM Initialised.\n");
+    serial_printf("PMM Initialised.\n");
 
     vmm_init();
-    log_ok("VMM Initialised.\n");
+    serial_printf("VMM Initialised.\n");
 
     if (blazfs_init(get_mod_addr(0))) {
         log_bad("BlazFS: Couldn't get boot module (INITRD).\n");
         for (;;) ;
     }
-    log_ok("BlazFS Initialised.\n");
+    serial_printf("BlazFS Initialised.\n");
 
     u32 rsdt_addr = acpi_init();
     if (rsdt_addr > 0) {
@@ -188,10 +188,10 @@ void _start(void) {
 
     madt_init();
     lapic_init();
-    log_ok("LAPIC Initialised.\n");
+    serial_printf("LAPIC Initialised.\n");
 
     ioapic_init();
-    log_ok("IO/APIC Initialised.\n");
+    serial_printf("IO/APIC Initialised.\n");
 
     log_info("CPU 0 lapic id: %x\n", lapic_get_id());
     smp_init();
@@ -200,7 +200,7 @@ void _start(void) {
         __asm__ ("nop");
     }
 
-    log_ok("SMP Initialised.\n");
+    serial_printf("SMP Initialised.\n");
 
     ata_init();
     fat32_init();
@@ -209,7 +209,6 @@ void _start(void) {
     keyboard_init();
 
     sched_init();
-    //sched_new_proc(list_proc, 3);
     sched_new_proc(shell_update, 1);
     pit_init();
 
