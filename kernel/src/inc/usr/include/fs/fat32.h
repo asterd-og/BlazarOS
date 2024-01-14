@@ -99,7 +99,8 @@ void fat32_init();
 
 char* fat32_get_name(fat32_entry* entry);
 
-fat32_directory* fat32_find_subdir(char* path);
+fat32_directory* fat32_find_entry_subdir(char* path);
+fat32_directory* fat32_find_subdir(const char* path);
 
 fat32_entry* fat32_find_entry(fat32_directory* working_dir, const char* filename);
 

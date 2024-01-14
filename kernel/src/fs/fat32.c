@@ -194,7 +194,7 @@ fat32_entry fat32_traverse_path(char* path) {
     return entry;
 }
 
-fat32_directory* fat32_find_subdir(char* path) {
+fat32_directory* fat32_find_entry_subdir(char* path) {
     int i = 0;
     u32 file_count = 0;
     for (i = 0; i < strlen(path); i++) {
@@ -223,6 +223,41 @@ fat32_directory* fat32_find_subdir(char* path) {
 
     serial_printf("Inside dir: '%s'\n", dir->own_entry->name);
 
+    return dir;
+}
+
+fat32_directory* fat32_find_subdir(const char* path_un) {
+    char* path = kmalloc(strlen(path_un));
+    memcpy(path, path_un, strlen(path_un));
+
+    int i = 0;
+    u32 file_count = 0;
+    for (i = 0; i < strlen(path); i++) {
+        if (path[i] == '/') file_count++;
+    }
+    i = 0;
+
+    char** arr = (char**)kmalloc(file_count * 8 + file_count);
+    char* p = strtok(path, "/");
+
+    while (p != NULL) {
+        arr[i++] = p;
+        p = strtok(NULL, "/");
+    }
+
+    fat32_directory* dir = fat_root_dir;
+
+    for (u32 j = 0; j < i; j++) {
+        char* pt = fat32_unprocess_name(arr[j]);
+        dir = fat32_traverse_dir(dir, pt);
+        kfree(pt);
+    }
+
+    kfree(arr);
+
+    serial_printf("Inside dir: '%s'\n", dir->own_entry->name);
+
+    kfree(path);
     return dir;
 }
 
@@ -364,7 +399,7 @@ int fat32_write(const char* filename, u8* buffer, u32 size, u8 attributes) {
         if (filename[i] == '/') {
             char* name = kmalloc(strlen(filename));
             memcpy(name, filename, strlen(filename));
-            working_dir = fat32_find_subdir(name);
+            working_dir = fat32_find_entry_subdir(name);
             int last_name = fat32_find_last_name(filename);
             memcpy(fname, filename + last_name, strlen(filename) - last_name);
             kfree(name);
@@ -424,7 +459,7 @@ int fat32_overwrite(const char* filename, u8* buffer, u32 size, u8 attributes) {
         if (filename[i] == '/') {
             char* name = kmalloc(strlen(filename));
             memcpy(name, filename, strlen(filename));
-            working_dir = fat32_find_subdir(name);
+            working_dir = fat32_find_entry_subdir(name);
             int last_name = fat32_find_last_name(filename);
             memcpy(fname, filename + last_name, strlen(filename) - last_name);
             kfree(name);
@@ -512,7 +547,7 @@ int fat32_create_dir(const char* path_processed) {
         if (path_processed[i] == '/') {
             char* name = kmalloc(strlen(path_processed));
             memcpy(name, path_processed, strlen(path_processed));
-            working_dir = fat32_find_subdir(name);
+            working_dir = fat32_find_entry_subdir(name);
             int last_name = fat32_find_last_name(path_processed);
             memcpy(path, path_processed + last_name, strlen(path_processed) - last_name);
             kfree(name);
