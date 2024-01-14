@@ -39,6 +39,9 @@
 #include <sched/sched.h>
 
 #include <fs/fat32.h>
+#include <fs/vfs.h>
+
+#include <sys/shell.h>
 
 // Set the base revision to 1, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
@@ -101,9 +104,7 @@ void list_proc() {
 }
 
 void dumb_terminal() {
-    while (!can_terminal) __asm__ ("nop");
     char c = 0;
-    printf(COL_WHITE "[" COL_YELLOW "root " COL_GREEN "/" COL_WHITE "]\n" COL_GREEN "# " COL_WHITE);
     int i = 0;
     while (1) {
         c = keyboard_get();
@@ -203,12 +204,13 @@ void _start(void) {
 
     ata_init();
     fat32_init();
+    vfs_init();
 
     keyboard_init();
 
     sched_init();
-    sched_new_proc(list_proc, 3);
-    sched_new_proc(dumb_terminal, 1);
+    //sched_new_proc(list_proc, 3);
+    sched_new_proc(shell_update, 1);
     pit_init();
 
     // We're done, just hang...

@@ -23,15 +23,18 @@ u32 fat32_get_sector(u32 cluster) {
 
 // TODO: Add directories cache and optimize write functions
 // To not rewrite the entire directory table
+// And detect in overwrite/write how many clusters we need
+// we might need more than 1 cluster!
 
 char* fat32_process_name(fat32_entry* entry) {
-    char* name = kmalloc(11);
+    char* name = kmalloc(12);
     u8 i = 0;
     for (; i < 8; i++) {
         if (entry->name[i] == 0x20 || entry->name[i] == 0x10) {
             name[i] = 0;
             break;
         }
+        name[i] = entry->name[i];
     }
 
     if (entry->attributes & FAT_ATTR_DIRECTORY) return name;
@@ -42,13 +45,13 @@ char* fat32_process_name(fat32_entry* entry) {
     u8 j = 0;
     for (; j < 3; j++) {
         if (entry->name[8 + j] == 0x20 || entry->name[8 + j] == 0x10) {
-            name[i + j] = 0;
+            name[i] = 0;
             break;
         }
         name[i] = entry->name[8 + j];
         i++;
     }
-    name[i] = 0;
+    name[11] = 0;
     return name;
 }
 
@@ -221,8 +224,6 @@ fat32_directory* fat32_find_entry_subdir(char* path) {
 
     kfree(arr);
 
-    serial_printf("Inside dir: '%s'\n", dir->own_entry->name);
-
     return dir;
 }
 
@@ -250,13 +251,16 @@ fat32_directory* fat32_find_subdir(const char* path_un) {
     for (u32 j = 0; j < i; j++) {
         char* pt = fat32_unprocess_name(arr[j]);
         dir = fat32_traverse_dir(dir, pt);
+        if (dir == NULL) {
+            serial_printf("FAT: Couldn't find subdir '%s'.\n", pt);
+            kfree(pt);
+            kfree(arr);
+            return NULL;
+        }
         kfree(pt);
     }
 
     kfree(arr);
-
-    serial_printf("Inside dir: '%s'\n", dir->own_entry->name);
-
     kfree(path);
     return dir;
 }
@@ -444,8 +448,10 @@ int fat32_write(const char* filename, u8* buffer, u32 size, u8 attributes) {
 
         ata_write_multiple(fat32_get_sector(cluster), sec_count, buffer);
         fat32_rewrite_directories(working_dir);
+        if (working_dir != fat_root_dir) kfree(working_dir);
         return 0;
     }
+    if (working_dir != fat_root_dir) kfree(working_dir);
     kfree(fname);
     return 1;
 }
@@ -503,6 +509,8 @@ int fat32_overwrite(const char* filename, u8* buffer, u32 size, u8 attributes) {
     entry->size = size;
     ata_write_multiple(sector, sect_count, buffer);
     fat32_rewrite_directories(working_dir);
+
+    if (working_dir != fat_root_dir) kfree(working_dir);
 
     kfree(fname);
     return 0;
@@ -594,10 +602,40 @@ int fat32_create_dir(const char* path_processed) {
         kfree(entry_name);
 
         fat32_rewrite_directories(working_dir);
+        if (working_dir != fat_root_dir) kfree(working_dir);
         return 0;
     }
 
+    if (working_dir != fat_root_dir) kfree(working_dir);
     kfree(path);
+    return 1;
+}
+
+fat32_entry* fat32_get_absolute_entry(const char* filename) {
+    fat32_directory* working_dir = fat_root_dir;
+    char* path = kmalloc(11);
+    memset(path, 0, 11);
+    memcpy(path, filename, 11);
+    for (int i = 0; i < strlen(filename); i++) {
+        if (filename[i] == '/') {
+            char* name = kmalloc(strlen(filename));
+            memcpy(name, filename, strlen(filename));
+            working_dir = fat32_find_entry_subdir(name);
+            int last_name = fat32_find_last_name(filename);
+            memcpy(path, filename + last_name, strlen(filename) - last_name);
+            kfree(name);
+        }
+    }
+
+    char* unprocessed_path = fat32_unprocess_name(path);
+    fat32_entry* entry = fat32_find_entry(working_dir, unprocessed_path);
+
+    kfree(unprocessed_path);
+    kfree(path);
+
+    if (working_dir != fat_root_dir) kfree(working_dir);
+
+    return entry;
 }
 
 void fat32_init() {

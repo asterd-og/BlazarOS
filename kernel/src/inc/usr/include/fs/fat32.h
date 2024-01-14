@@ -3,6 +3,7 @@
 #include <types.h>
 
 #include <dev/storage/ata.h>
+#include <dev/serial/serial.h>
 
 #define FAT_ATTR_READ_ONLY 0x01
 #define FAT_ATTR_HIDDEN 0x02
@@ -97,7 +98,7 @@ extern fat32_directory* fat_root_dir;
 
 void fat32_init();
 
-char* fat32_get_name(fat32_entry* entry);
+char* fat32_process_name(fat32_entry* entry);
 
 fat32_directory* fat32_find_entry_subdir(char* path);
 fat32_directory* fat32_find_subdir(const char* path);
@@ -110,3 +111,5 @@ fat32_directory* fat32_traverse_dir(fat32_directory* root_dir, const char* dirna
 
 int fat32_write(const char* filename, u8* buffer, u32 size, u8 attributes);
 int fat32_overwrite(const char* filename, u8* buffer, u32 size, u8 attributes);
+
+fat32_entry* fat32_get_absolute_entry(const char* filename);
