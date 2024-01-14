@@ -9,8 +9,10 @@
 #define FAT_ATTR_SYSTEM 0x04
 #define FAT_ATTR_VOLUME_ID 0x08
 #define FAT_ATTR_DIRECTORY 0x10
-#define FAT_ATTR_ARCHIVE 0x20 // long file name
+#define FAT_ATTR_ARCHIVE 0x20
 #define FAT_ATTR_LFN 0x01 | 0x02 | 0x04 | 0x08 // long file name
+
+#define FAT_END_CLUSTER 0xFFFFFFF
 
 typedef struct {
     u8 jmp[3];
@@ -80,12 +82,16 @@ typedef struct {
     u32 size;
 } __attribute__((packed)) fat32_entry;
 
-typedef struct {
-    fat32_entry own_entry;
+struct fat32_directory {
+    struct fat32_directory* parent;
+    fat32_entry* own_entry;
     fat32_entry* entries;
     u32 file_count;
     u32 sector;
-} __attribute__((packed)) fat32_directory;
+    u32 cluster;
+};
+
+typedef struct fat32_directory fat32_directory;
 
 extern fat32_directory* fat_root_dir;
 
@@ -93,6 +99,13 @@ void fat32_init();
 
 char* fat32_get_name(fat32_entry* entry);
 
+fat32_directory* fat32_find_subdir(char* path);
+
+fat32_entry* fat32_find_entry(fat32_directory* working_dir, const char* filename);
+
 int fat32_read(const char* filename, u8* buffer);
 
 fat32_directory* fat32_traverse_dir(fat32_directory* root_dir, const char* dirname);
+
+int fat32_write(const char* filename, u8* buffer, u32 size, u8 attributes);
+int fat32_overwrite(const char* filename, u8* buffer, u32 size, u8 attributes);

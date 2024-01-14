@@ -90,14 +90,18 @@ void* get_mod_addr(int pos) {
     return module_request.response->modules[pos]->address;
 }
 
+bool can_terminal = false;
+
 void list_proc() {
     for (u64 i = 0; i < sched_pid; i++) {
         printf("Proc PID: %lx | CPU #: %lx\n", i, sched_get_proc(i)->cpu_id);
     }
+    can_terminal = true;
     return;
 }
 
 void dumb_terminal() {
+    while (!can_terminal) __asm__ ("nop");
     char c = 0;
     printf(COL_WHITE "[" COL_YELLOW "root " COL_GREEN "/" COL_WHITE "]\n" COL_GREEN "# " COL_WHITE);
     int i = 0;

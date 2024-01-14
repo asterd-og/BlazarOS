@@ -108,10 +108,12 @@ fat32_directory* fat32_traverse_dir(fat32_directory* root_dir, const char* dirna
 
             fat32_directory* dir = kmalloc(sizeof(fat32_directory));
 
-            dir->own_entry = root_dir->entries[i];
+            dir->own_entry = &root_dir->entries[i];
+            dir->parent = root_dir;
             u32 own_cluster = ((u32)entry.high_cluster_entry << 16)
                         | ((u32)entry.low_cluster_entry);
             dir->sector = fat32_get_sector(own_cluster);
+            dir->cluster = own_cluster;
             loc = 0;
             sector_count = 0;
             memset(mem, 0, 512);
@@ -219,7 +221,7 @@ fat32_directory* fat32_find_subdir(char* path) {
 
     kfree(arr);
 
-    serial_printf("Inside dir: '%s'\n", dir->own_entry.name);
+    serial_printf("Inside dir: '%s'\n", dir->own_entry->name);
 
     return dir;
 }
@@ -280,7 +282,7 @@ int fat32_read(const char* filename, u8* buffer) {
 }
 
 u32 fat32_allocate_cluster() {
-    if (fat_info->available_cluster_num != 0xFFFFFFFF)
+    if (fat_info->available_cluster_num != 0xFFFFFFFF) {
         u32 ret = fat_info->available_cluster_num;
         u32 sector = fat32_get_sector(fat_info->available_cluster_num + 1);
         // Find next available cluster
@@ -293,7 +295,7 @@ u32 fat32_allocate_cluster() {
             fat_info->available_cluster_num++;
             while (cluster_buf[0] != 0x00000000) {
                 sector = fat32_get_sector(fat_info->available_cluster_num);
-                ata_read_multiple(sector)
+                ata_read_multiple(sector, 1, cluster_buf);
                 fat_info->available_cluster_num++;
             }
             // Found free cluster!
@@ -306,7 +308,7 @@ u32 fat32_allocate_cluster() {
         // Flush fsinfo
 
         return ret;
-    else {
+    } else {
         if (fat_info->free_cluster_count == 0) return 0;
         for (u32 i = 2; i < fat_info->free_cluster_count; i++) {
             // TODO: Look for 0x00000000
@@ -327,13 +329,13 @@ void fat32_rewrite_directories(fat32_directory* working_dir) {
 
     ata_write_multiple(working_dir->sector, root_sect_count, copy_buf);
 
-    kfree(copy_buf);   
+    kfree(copy_buf);
 }
 
 void fat32_cleanup_clusters(u32 cluster, u32 size) {
     u32 sect_count = 1;
     if (size > 512) {
-        sect_count = ALIGN_UP(size, 512):
+        sect_count = ALIGN_UP(size, 512);
         sect_count /= 512;
     }
 
@@ -369,7 +371,7 @@ int fat32_write(const char* filename, u8* buffer, u32 size, u8 attributes) {
         }
     }
 
-    for (u32 i = 0; i < working_dir->file_count; i++) {
+    for (u32 i = 0; i < working_dir->file_count + 25; i++) {
         if ((u8)working_dir->entries[i].name[0] != 0xE5 &&
             (u8)working_dir->entries[i].name[0] != 0x0) {
                 continue;
@@ -402,6 +404,8 @@ int fat32_write(const char* filename, u8* buffer, u32 size, u8 attributes) {
         entry->low_cluster_entry = (u16)(cluster & 0xFFFF);
 
         entry->size = size;
+
+        working_dir->file_count++;
 
         ata_write_multiple(fat32_get_sector(cluster), sec_count, buffer);
         fat32_rewrite_directories(working_dir);
@@ -452,7 +456,7 @@ int fat32_overwrite(const char* filename, u8* buffer, u32 size, u8 attributes) {
         // Allocate new fat32 cluster to use that.
         u32 old_cluster = ((u32)entry->high_cluster_entry << 16)
                     | ((u32)entry->low_cluster_entry);
-        fat32_cleanup_clusters(old_cluster);
+        fat32_cleanup_clusters(old_cluster, entry->size);
 
         u32 cluster = fat32_allocate_cluster();
         sector = fat32_get_sector(cluster);
@@ -464,6 +468,101 @@ int fat32_overwrite(const char* filename, u8* buffer, u32 size, u8 attributes) {
     entry->size = size;
     ata_write_multiple(sector, sect_count, buffer);
     fat32_rewrite_directories(working_dir);
+
+    kfree(fname);
+    return 0;
+}
+
+int fat32_create_dot(fat32_directory* working_dir) {
+    bool dot_written = false; // set to true once we create '.'
+    for (u32 i = 0; i < 2; i++) {
+        fat32_entry* entry = &working_dir->entries[i];
+
+        char* name = (dot_written ? "..      " : ".       ");
+        serial_printf("Creating '%s' on %s.\n", name, working_dir->own_entry->name);
+
+        memcpy(entry->name, name, 11);
+        entry->attributes = FAT_ATTR_DIRECTORY;
+
+        u32 cluster = (dot_written ? working_dir->parent->cluster : working_dir->cluster);
+
+        entry->high_cluster_entry = (u16)(cluster >> 16);
+        entry->low_cluster_entry = (u16)(cluster & 0xFFFF);
+
+        working_dir->file_count++;
+
+        entry->size = 0;
+
+        if (dot_written) {
+            fat32_rewrite_directories(working_dir);
+            return 0;
+        }
+
+        dot_written = true;
+    }
+    return 1;
+}
+
+int fat32_create_dir(const char* path_processed) {
+    fat32_directory* working_dir = fat_root_dir;
+    char* path = kmalloc(11);
+    memset(path, 0, 11);
+    memcpy(path, path_processed, 11);
+    for (int i = 0; i < strlen(path_processed); i++) {
+        if (path_processed[i] == '/') {
+            char* name = kmalloc(strlen(path_processed));
+            memcpy(name, path_processed, strlen(path_processed));
+            working_dir = fat32_find_subdir(name);
+            int last_name = fat32_find_last_name(path_processed);
+            memcpy(path, path_processed + last_name, strlen(path_processed) - last_name);
+            kfree(name);
+        }
+    }
+
+    // Find free entry
+
+    for (u32 i = 0; i < working_dir->file_count; i++) {
+        if ((u8)working_dir->entries[i].name[0] != 0xE5 &&
+            (u8)working_dir->entries[i].name[0] != 0x0) {
+                continue;
+            }
+        
+        fat32_entry* entry = &working_dir->entries[i];
+
+        char* entry_name = fat32_unprocess_name(path);
+        memcpy(entry->name, entry_name, 11);
+        serial_printf("%s vs %s vs %s", entry_name, entry->name, path);
+
+        entry->attributes = FAT_ATTR_DIRECTORY;
+
+        u32 cluster = fat32_allocate_cluster();
+        if (cluster == 0) {
+            serial_printf("Couldn't allocate cluster for directory!\n");
+        }
+
+        entry->high_cluster_entry = (u16)(cluster >> 16);
+        entry->low_cluster_entry = (u16)(cluster & 0xFFFF);
+
+        entry->size = 0;
+
+        u8* buf0 = kmalloc(fat_bpb->sectors_per_cluster * 512);
+        memset(buf0, 0, fat_bpb->sectors_per_cluster * 512);
+        *((u32*)buf0 + ((fat_bpb->sectors_per_cluster * 512) - 2)) = FAT_END_CLUSTER;
+        ata_write_multiple(fat32_get_sector(cluster), fat_bpb->sectors_per_cluster, buf0);
+        kfree(buf0);
+
+        working_dir->file_count++;
+
+        if (fat32_create_dot(fat32_traverse_dir(working_dir, entry_name))) {
+            serial_printf("Couldn't create dot directories!\n");
+        }
+        kfree(entry_name);
+
+        fat32_rewrite_directories(working_dir);
+        return 0;
+    }
+
+    kfree(path);
 }
 
 void fat32_init() {
@@ -506,6 +605,7 @@ void fat32_init() {
     fat_file_count = 0;
     
     fat_root_dir->sector = fat_root_sector;
+    fat_root_dir->cluster = ebpb->root_cluster;
 
     while (true) {
         if (loc * sizeof(fat32_entry) >= 512) {
