@@ -1,5 +1,5 @@
 # BlazarOS
-BlazarOS is a hobby operating system built for the x86_64 architecture. Here are its features: 
+BlazarOS is a hobby operating system built for the x86_64 architecture. Here are its features:
 
 - [x] GDT/IDT Tables
 - [x] MM
