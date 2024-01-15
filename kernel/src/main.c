@@ -93,8 +93,6 @@ void* get_mod_addr(int pos) {
     return module_request.response->modules[pos]->address;
 }
 
-bool can_terminal = false;
-
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
 // linker script accordingly.
