@@ -21,6 +21,16 @@ BlazarOS is a hobby operating system built for the x86_64 architecture. Here are
     - [x] PIT/HPET
     - [ ] PCI
     - [ ] RTC Clock
+    - [ ] SB16 Driver
+    - [ ] Internet
+    - [ ] RTL-8139 Driver
+        - [ ] TCP/IP Stack
+        - [ ] ARP
+        - [ ] UDP
+        - [ ] IPV4
+        - [ ] DHCP
+        - [ ] DNS
+        - [ ] HTTP
 - [x] FAT32 Driver
     - [x] Read operations
     - [x] Write operations
@@ -29,15 +39,6 @@ BlazarOS is a hobby operating system built for the x86_64 architecture. Here are
 - [x] VFS
 - [ ] ELF
     - [ ] Syscalls
-- [ ] Internet
-    - [ ] RTL-8139 Driver
-    - [ ] TCP/IP Stack
-    - [ ] ARP
-    - [ ] UDP
-    - [ ] IPV4
-    - [ ] DHCP
-    - [ ] DNS
-    - [ ] HTTP
 - [ ] GUI
     - [ ] WM
         - [ ] Window compositor
