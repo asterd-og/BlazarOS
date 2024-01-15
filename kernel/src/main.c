@@ -95,41 +95,6 @@ void* get_mod_addr(int pos) {
 
 bool can_terminal = false;
 
-void list_proc() {
-    for (u64 i = 0; i < sched_pid; i++) {
-        printf("Proc PID: %lx | CPU #: %lx\n", i, sched_get_proc(i)->cpu_id);
-    }
-    can_terminal = true;
-    return;
-}
-
-void dumb_terminal() {
-    char c = 0;
-    int i = 0;
-    while (1) {
-        c = keyboard_get();
-        if (c != 0) {
-            switch (c) {
-                case '\n':
-                    printf("\n");
-                    printf(COL_WHITE "[" COL_YELLOW "root " COL_GREEN "/" COL_WHITE "]\n" COL_GREEN "# " COL_WHITE);
-                    i = 0;
-                    break;
-                case '\b':
-                    if (i > 0) {
-                        printf("\b \b");
-                        i--;
-                    }
-                    break;
-                default:
-                    printf("%c", c);
-                    i++;
-                    break;
-            }
-        }
-    }
-}
-
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
 // linker script accordingly.

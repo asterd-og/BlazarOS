@@ -97,12 +97,11 @@ void vfs_list_print() {
         entry = &vfs->current_dir->entries[i];
         name_buf = fat32_process_name(entry);
         if (entry->attributes & FAT_ATTR_DIRECTORY)
-            printf(COL_CYAN "\n\tDIR - %s" COL_WHITE, name_buf);
+            printf(COL_CYAN "DIR - %s\n" COL_WHITE, name_buf);
         else
-            printf(COL_WHITE "\n\tFILE - %s | %dB", name_buf, entry->size);
+            printf(COL_WHITE "FILE - %s | %dB\n", name_buf, entry->size);
         kfree(name_buf);
     }
-    printf("\n");
     unlock();
 }
 

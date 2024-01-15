@@ -1,4 +1,5 @@
 #include <sys/shell.h>
+#include <sched/sched.h>
 
 char buf[512];
 int buf_idx = 0;
@@ -17,12 +18,14 @@ void shell_ls();
 void shell_cd();
 void shell_cat();
 void shell_touch();
+void shell_lsproc();
 
 const cmd_info cmds[] = {
     {"ls", shell_ls},
     {"cd", shell_cd},
     {"cat", shell_cat},
     {"touch", shell_touch},
+    {"lsproc", shell_lsproc},
     {"",0}
 };
 
@@ -66,6 +69,7 @@ void shell_update() {
                     if (buf_idx > 0) {
                         printf("\b \b");
                         buf_idx--;
+                        buf[buf_idx] = 0;
                     }
                     break;
                 default:
@@ -100,4 +104,10 @@ void shell_touch() {
     u8* null_buf = kmalloc(1);
     vfs_write(arg, null_buf, 1);
     kfree(null_buf);
+}
+
+void shell_lsproc() {
+    for (u64 i = 0; i < sched_pid; i++) {
+        printf("Proc PID: %lx | CPU #: %lx\n", i, sched_get_proc(i)->cpu_id);
+    }
 }
