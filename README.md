@@ -37,7 +37,7 @@ BlazarOS is a hobby operating system built for the x86_64 architecture. Here are
     - [x] Modify operations
     - [ ] Delete operations
 - [x] VFS
-- [ ] ELF
+- [x] ELF
     - [ ] Syscalls
 - [ ] GUI
     - [ ] WM
