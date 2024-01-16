@@ -66,6 +66,14 @@ restore_fat:
 	ls mnt
 	sudo umount mnt
 
+make_fat:
+	-sudo umount mnt
+	$(MAKE) -C exec/src
+	sudo mount fat.img mnt
+	sudo mv exec/out/* mnt/bin/
+	ls mnt/bin/
+	sudo umount mnt
+
 limine:
 	git clone https://github.com/limine-bootloader/limine.git --branch=v6.x-branch-binary --depth=1
 	$(MAKE) -C limine \

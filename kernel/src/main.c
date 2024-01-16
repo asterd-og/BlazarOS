@@ -156,6 +156,7 @@ void _start(void) {
     ioapic_init();
     serial_printf("IO/APIC Initialised.\n");
 
+
     log_info("CPU 0 lapic id: %x\n", lapic_get_id());
     smp_init();
 
@@ -172,7 +173,7 @@ void _start(void) {
     keyboard_init();
 
     sched_init();
-    sched_new_proc(shell_update, 1);
+    //sched_new_proc(shell_update, 1);
     pit_init();
 
     // We're done, just hang...

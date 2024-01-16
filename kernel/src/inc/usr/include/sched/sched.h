@@ -11,6 +11,8 @@
 #include <lib/log.h>
 #include <lib/string/string.h>
 
+#include <sys/elf.h>
+
 #define SCHED_INT_VEC 0x32
 
 extern u64 sched_pid;
@@ -31,6 +33,7 @@ typedef struct {
 void sched_init();
 
 process* sched_new_proc(void* func, u64 cpu_id);
+process* sched_new_elf(void* elf, u64 cpu_id);
 process* sched_get_proc(u64 pid);
 void sched_kill();
 

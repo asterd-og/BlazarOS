@@ -26,7 +26,9 @@
         "hpet.h": "c",
         "fat32.h": "c",
         "typeinfo": "c",
-        "shell.h": "c"
+        "shell.h": "c",
+        "elf.h": "c",
+        "vfs.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

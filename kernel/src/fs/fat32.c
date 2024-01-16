@@ -17,6 +17,16 @@ fat32_directory* fat_directories_cache;
 
 fat32_info* fat_info;
 
+bool fs_test;
+
+void fs_lock() {
+    while (__atomic_test_and_set(&fs_test, __ATOMIC_ACQUIRE));
+}
+
+void fs_unlock() {
+    __atomic_clear(&fs_test, __ATOMIC_RELEASE);
+}
+
 u32 fat32_get_sector(u32 cluster) {
     return ((cluster - 2) * fat_bpb->sectors_per_cluster) + fat_data_sector;
 }
@@ -39,7 +49,11 @@ char* fat32_process_name(fat32_entry* entry) {
 
     if (entry->attributes & FAT_ATTR_DIRECTORY) return name;
 
-    name[i] = '.';
+    if (entry->name[8] != 0x20) {
+        name[i] = '.';
+    } else {
+        return name;
+    }
     i++;
 
     u8 j = 0;
@@ -284,6 +298,8 @@ fat32_entry* fat32_find_entry(fat32_directory* working_dir, const char* filename
 }
 
 int fat32_read(const char* filename, u8* buffer) {
+    fs_lock();
+    lock();
     fat32_entry entry;
     bool in_dir = false;
     
@@ -316,6 +332,9 @@ int fat32_read(const char* filename, u8* buffer) {
     }
 
     ata_read_multiple(file_sector, num_sectors, buffer);
+
+    fs_unlock();
+    unlock();
 
     return 0;
 }
@@ -622,6 +641,7 @@ fat32_entry* fat32_get_absolute_entry(const char* filename) {
             memcpy(name, filename, strlen(filename));
             working_dir = fat32_find_entry_subdir(name);
             int last_name = fat32_find_last_name(filename);
+            memset(path, 0, 11);
             memcpy(path, filename + last_name, strlen(filename) - last_name);
             kfree(name);
         }

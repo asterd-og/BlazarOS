@@ -31,7 +31,7 @@ const cmd_info cmds[] = {
 
 
 void shell_prompt() {
-    printf(COL_WHITE "[" COL_YELLOW "root " COL_GREEN "%s" COL_WHITE "]\n" COL_GREEN "# " COL_WHITE, vfs->path);
+    //printf(COL_WHITE "[" COL_YELLOW "root " COL_GREEN "%s" COL_WHITE "]\n" COL_GREEN "# " COL_WHITE, vfs->path);
 }
 
 void shell_init() {
@@ -83,27 +83,27 @@ void shell_update() {
 }
 
 void shell_ls() {
-    vfs_list_print();
+    //vfs_list_print();
 }
 
 void shell_cd() {
-    vfs_cd(arg);
+    //vfs_cd(arg);
 }
 
 void shell_cat() {
-    u8* buf = vfs_read(arg);
+    /*u8* buf = vfs_read(arg);
     if (buf == NULL) {
         printf(COL_RED "Error: Couldn't find file '%s'." COL_WHITE "\n", arg);
         return;
     }
     printf("%s", buf);
-    kfree(buf);
+    kfree(buf);*/
 }
 
 void shell_touch() {
-    u8* null_buf = kmalloc(1);
+    /*u8* null_buf = kmalloc(1);
     vfs_write(arg, null_buf, 1);
-    kfree(null_buf);
+    kfree(null_buf);*/
 }
 
 void shell_lsproc() {

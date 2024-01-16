@@ -6,6 +6,4 @@
 
 #include <sched/sched.h>
 
-void syscall_init();
-
 void syscall_handler(registers* regs);

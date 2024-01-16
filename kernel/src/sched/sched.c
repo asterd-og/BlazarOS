@@ -48,6 +48,47 @@ process* sched_new_proc(void* func, u64 cpu_id) {
     return proc;
 }
 
+process* sched_new_elf(void* elf, u64 cpu_id) {
+    lock();
+
+    if (get_cpu(cpu_id) == NULL) {
+        serial_printf("Sched error: Non-existent CPU %lx\n", cpu_id);
+        return NULL;
+    }
+
+    process* proc = (process*)kmalloc(sizeof(process));
+
+    proc->PID = sched_pid;
+    proc->pm = vmm_new_pm();
+    proc->state = PROC_RUNNING;
+    proc->cpu_id = cpu_id;
+
+    u64 entry_point = elf_load(elf, proc->pm);
+    if (entry_point == -1) {
+        serial_printf("Couldn't open elf!\n");
+        kfree(proc);
+        unlock();
+        return NULL;
+    }
+
+    proc->regs.rip = (u64)sched_wrapper;
+    proc->regs.rdi = (u64)entry_point;
+    proc->regs.cs  = 0x28;
+    proc->regs.ss  = 0x30;
+    proc->regs.rflags = 0x202;
+
+    char* stack = (char*)HIGHER_HALF(pmm_alloc(1));
+    // Stack's size is PAGE_SIZE
+    proc->regs.rsp = (u64)(stack + PAGE_SIZE);
+
+    get_cpu(cpu_id)->proc_list[get_cpu(cpu_id)->proc_size] = proc;
+    sched_pid++;
+    get_cpu(cpu_id)->proc_size++;
+    unlock();
+
+    return proc;
+}
+
 void sched_kill() {
     lock();
     this_cpu()->current_proc->state = PROC_DEAD;
@@ -79,7 +120,7 @@ void sched_remove_proc(u64 pid) {
     kfree(proc);
 
     cpu->proc_size--;
-    log_ok("Killed process %ld in CPU %ld.\n", pid, cpu->lapic_id);
+    serial_printf("Killed process %ld in CPU %ld.\n", pid, cpu->lapic_id);
 }
 
 void sched_switch(registers* regs) {
