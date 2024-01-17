@@ -28,10 +28,6 @@
 
 #include <arch/smp/smp.h>
 
-#include <flanterm/colors.h>
-#include <flanterm/flanterm.h>
-#include <flanterm/backends/fb.h>
-
 #include <mm/pmm/pmm.h>
 #include <mm/vmm/vmm.h>
 #include <mm/heap/heap.h>
@@ -40,8 +36,6 @@
 
 #include <fs/fat32.h>
 #include <fs/vfs.h>
-
-#include <sys/shell.h>
 
 // Set the base revision to 1, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
@@ -169,11 +163,17 @@ void _start(void) {
     ata_init();
     fat32_init();
     vfs_init();
+    dev_init();
+
+    fat32_entry* entry = fat32_get_absolute_entry("bin/shell");
+    u8* buf = kmalloc(entry->size);
+    vfs_read("hd0:/bin/shell", buf, entry->size, 0);
+    sched_new_elf(buf, 1);
+    kfree(buf);
 
     keyboard_init();
 
     sched_init();
-    //sched_new_proc(shell_update, 1);
     pit_init();
 
     // We're done, just hang...

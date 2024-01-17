@@ -1,5 +1,16 @@
 # User controllable C flags.
-CFLAGS = -m64 -I../lib -ffreestanding -std=gnu99
+CFLAGS = -m64 -I../libs -I../../kernel/src/inc/usr/include -ffreestanding -std=gnu99 -Wall \
+    -Wextra \
+    -fno-stack-protector \
+    -fno-stack-check \
+    -fno-lto \
+    -fPIE \
+    -march=x86-64 \
+    -mno-80387 \
+    -mno-mmx \
+    -mno-sse \
+    -mno-sse2 \
+    -mno-red-zone
 LD_FLAGS = -Tlinker.ld -nostdlib
 
 CFILES = $(shell find -L . -type f -name '*.c')
@@ -9,8 +20,8 @@ all: $(OBJ) clean
 	@echo all done.
 
 %.o: %.c
-	gcc $(CFLAGS) -c $< -o $@
-	gcc $@ $(LD_FLAGS) -o ../out/$(basename $@)
+	clang -static $(CFLAGS) -c $< -o $@
+	ld -static $@ ../libs/blazlib.a $(LD_FLAGS) -o ../out/$(basename $@)
 
 clean:
 	-rm -f $(OBJ)

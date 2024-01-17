@@ -36,9 +36,9 @@ process* sched_new_proc(void* func, u64 cpu_id) {
     proc->regs.ss  = 0x30;
     proc->regs.rflags = 0x202;
 
-    char* stack = (char*)HIGHER_HALF(pmm_alloc(1));
-    // Stack's size is PAGE_SIZE
-    proc->regs.rsp = (u64)(stack + PAGE_SIZE);
+    char* stack = (char*)kmalloc(8 * PAGE_SIZE); // 32 kb
+    proc->stack_addr = (u64)(stack);
+    proc->regs.rsp = (u64)(stack + (PAGE_SIZE * 8));
 
     get_cpu(cpu_id)->proc_list[get_cpu(cpu_id)->proc_size] = proc;
     sched_pid++;
@@ -77,9 +77,8 @@ process* sched_new_elf(void* elf, u64 cpu_id) {
     proc->regs.ss  = 0x30;
     proc->regs.rflags = 0x202;
 
-    char* stack = (char*)HIGHER_HALF(pmm_alloc(1));
-    // Stack's size is PAGE_SIZE
-    proc->regs.rsp = (u64)(stack + PAGE_SIZE);
+    char* stack = (char*)kmalloc(8 * PAGE_SIZE); // 32 kb
+    proc->regs.rsp = (u64)(stack + (PAGE_SIZE * 8));
 
     get_cpu(cpu_id)->proc_list[get_cpu(cpu_id)->proc_size] = proc;
     sched_pid++;
@@ -116,7 +115,8 @@ void sched_remove_proc(u64 pid) {
     }
 
     vmm_destroy_pm(proc->pm);
-    kfree((void*)(proc->regs.rsp - PAGE_SIZE));
+    //kfree((void*)(proc->regs.rsp - (PAGE_SIZE * 8)));
+    // Page faults me for some obscure reason ^
     kfree(proc);
 
     cpu->proc_size--;

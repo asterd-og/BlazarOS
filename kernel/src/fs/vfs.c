@@ -1,7 +1,10 @@
 #include <fs/vfs.h>
 
-vfs_info* root_fs;
+vfs_info* hd_fs;
 vfs_info* dev_fs;
+vfs_info* root_fs;
+vfs_info* vfs_list[256];
+int vfs_count = 0;
 bool vfs_test;
 
 void vfs_lock() {
@@ -14,7 +17,7 @@ void vfs_unlock() {
     __atomic_clear(&vfs_test, __ATOMIC_RELEASE);
 }
 
-int vfs_rfs_read(vfs_info* vfs, const char* path, u8* buf, u32 size, u32 offset) {
+int vfs_hd_read(vfs_info* vfs, const char* path, u8* buf, u32 size, u32 offset) {
     u8* good_buf = kmalloc(ALIGN_UP(size, 512) / 512);
     
     int status = fat32_read(path, good_buf);
@@ -30,7 +33,7 @@ int vfs_rfs_read(vfs_info* vfs, const char* path, u8* buf, u32 size, u32 offset)
     return 0;
 }
 
-int vfs_rfs_write(vfs_info* vfs, const char* path, u8* buf, u32 size, u32 offset) {
+int vfs_hd_write(vfs_info* vfs, const char* path, u8* buf, u32 size, u32 offset) {
     u8* good_buf = kmalloc(ALIGN_UP(size, 512) / 512);
     memcpy(good_buf, buf, size);
     
@@ -73,15 +76,67 @@ int vfs_dev_write(vfs_info* vfs, const char* path, u8* buf, u32 size, u32 offset
     return status;
 }
 
-void vfs_init() {
-    // Create root fs
-    root_fs = (vfs_info*)kmalloc(sizeof(vfs_info));
-    root_fs->type = VFS_ROOT;
-    const char rfs_name[] = "hd0";
-    memcpy(root_fs->name, rfs_name, strlen(rfs_name));
+/*
 
-    root_fs->read = vfs_rfs_read;
-    root_fs->write = vfs_rfs_write;
+Wrappers for the root_fs (so I can call root_fs->read("hd0:/hey.txt") or root_fs->read("dev:/tty0"))
+
+*/
+
+int vfs_rfs_read(vfs_info* vfs, const char* path, u8* buf, u32 size, u32 offset) {
+    int i = 0;
+    for (; i < 24; i++) {
+        if (path[i] == ':') break;
+    }
+
+    for (int j = 0; j < vfs_count; j++) {
+        if (!memcmp(vfs_list[j]->name, path, i)) {
+            return vfs_list[j]->read(vfs_list[j], path + i + 2, buf, size, offset);
+        }
+    }
+
+    return -1;
+}
+
+int vfs_rfs_write(vfs_info* vfs, const char* path, u8* buf, u32 size, u32 offset) {
+    int i = 0;
+    for (; i < 24; i++) {
+        if (path[i] == ':') break;
+    }
+
+    for (int j = 0; j < vfs_count; j++) {
+        if (!memcmp(vfs_list[j]->name, path, i)) {
+            return vfs_list[j]->write(vfs_list[j], path + i + 2, buf, size, offset);
+        }
+    }
+
+    return -1;
+}
+
+/*
+
+General Wrappers
+
+*/
+
+int vfs_read(const char* path, u8* buf, u32 size, u32 offset) {
+    return root_fs->read(root_fs, path, buf, size, offset);
+}
+
+int vfs_write(const char* path, u8* buf, u32 size, u32 offset) {
+    return root_fs->write(root_fs, path, buf, size, offset);
+}
+
+void vfs_init() {
+    // Create HD fs
+    hd_fs = (vfs_info*)kmalloc(sizeof(vfs_info));
+    hd_fs->type = VFS_BLOCK;
+    const char hd_name[] = "hd0";
+    memcpy(hd_fs->name, hd_name, strlen(hd_name));
+
+    hd_fs->read = vfs_hd_read;
+    hd_fs->write = vfs_hd_write;
+    vfs_list[vfs_count] = hd_fs;
+    vfs_count++;
 
     // Dev fs
     dev_fs = (vfs_info*)kmalloc(sizeof(vfs_info));
@@ -91,4 +146,13 @@ void vfs_init() {
 
     dev_fs->read = vfs_dev_read;
     dev_fs->write = vfs_dev_write;
+    vfs_list[vfs_count] = dev_fs;
+    vfs_count++;
+
+    // Root fs
+    root_fs = (vfs_info*)kmalloc(sizeof(vfs_info));
+    root_fs->type = VFS_ROOT;
+
+    root_fs->read = vfs_rfs_read;
+    root_fs->write = vfs_rfs_write;
 }

@@ -28,6 +28,7 @@ typedef struct {
     page_map* pm;
     u64 state;
     u64 cpu_id;
+    u64 stack_addr;
 } process;
 
 void sched_init();

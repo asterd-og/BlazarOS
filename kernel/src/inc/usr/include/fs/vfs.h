@@ -15,6 +15,7 @@
 enum {
     VFS_UNKNOWN,
     VFS_ROOT,
+    VFS_BLOCK,
     VFS_DEV
 };
 
@@ -38,10 +39,9 @@ typedef struct vfs_info vfs_info;
 
 void vfs_init();
 
-u8* vfs_read(vfs_info* vfs, const char* path);
-void vfs_write(vfs_info* vfs, const char* path, u8* buffer, u32 size);
-
-void vfs_list_print(vfs_info* vfs);
+int vfs_read(const char* path, u8* buf, u32 size, u32 offset);
+int vfs_write(const char* path, u8* buf, u32 size, u32 offset);
 
 extern vfs_info* root_fs;
+extern vfs_info* hd_fs;
 extern vfs_info* dev_fs;

@@ -1,4 +1,5 @@
 #include <dev/dev.h>
+#include <main.h>
 
 dev_info* dev_list[256];
 int dev_idx = 0;
@@ -20,4 +21,21 @@ dev_info* dev_get(const char* name) {
         }
     }
     return NULL;
+}
+
+/*
+
+Basic devices functions
+
+*/
+
+// TTY0
+
+int tty0_write(u8* buf, u32 offset, u32 size) {
+    flanterm_write(ft_ctx, buf, size);
+    return 0;
+}
+
+void dev_init() {
+    dev_register("tty0", DEV_CHAR, NULL, tty0_write);
 }

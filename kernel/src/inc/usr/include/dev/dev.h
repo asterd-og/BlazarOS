@@ -18,6 +18,8 @@ struct dev_info {
 
 typedef struct dev_info dev_info;
 
+void dev_init(); // Initialises all basic devices, tty0, fb0, kb etc into vfs
+
 void dev_register(const char* name, u8 type, int (*read)(u8*,u32,u32), int (*write)(u8*,u32,u32));
 
 dev_info* dev_get(const char* name);

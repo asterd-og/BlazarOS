@@ -71,7 +71,6 @@ make_fat:
 	$(MAKE) -C exec/src
 	sudo mount fat.img mnt
 	sudo mv exec/out/* mnt/bin/
-	ls mnt/bin/
 	sudo umount mnt
 
 limine:
