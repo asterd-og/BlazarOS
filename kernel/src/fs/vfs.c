@@ -18,33 +18,10 @@ void vfs_unlock() {
 }
 
 int vfs_hd_read(vfs_info* vfs, const char* path, u8* buf, u32 size, u32 offset) {
-    u8* good_buf = kmalloc(ALIGN_UP(size, 512) / 512);
-    
-    int status = fat32_read(path, good_buf);
-
-    if (status != 0) {
-        kfree(good_buf);
-        return 1;
-    }
-
-    memcpy(buf, good_buf, size);
-
-    kfree(good_buf);
     return 0;
 }
 
 int vfs_hd_write(vfs_info* vfs, const char* path, u8* buf, u32 size, u32 offset) {
-    u8* good_buf = kmalloc(ALIGN_UP(size, 512) / 512);
-    memcpy(good_buf, buf, size);
-    
-    int status = fat32_write(path, good_buf, size, FAT_ATTR_ARCHIVE);
-
-    if (status != 0) {
-        kfree(good_buf);
-        return 1;
-    }
-
-    kfree(good_buf);
     return 0;
 }
 

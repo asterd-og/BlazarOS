@@ -150,7 +150,6 @@ void _start(void) {
     ioapic_init();
     serial_printf("IO/APIC Initialised.\n");
 
-
     log_info("CPU 0 lapic id: %x\n", lapic_get_id());
     smp_init();
 
@@ -160,16 +159,12 @@ void _start(void) {
 
     serial_printf("SMP Initialised.\n");
 
+    pci_init();
+
     ata_init();
     fat32_init();
     vfs_init();
     dev_init();
-
-    fat32_entry* entry = fat32_get_absolute_entry("bin/shell");
-    u8* buf = kmalloc(entry->size);
-    vfs_read("hd0:/bin/shell", buf, entry->size, 0);
-    sched_new_elf(buf, 1);
-    kfree(buf);
 
     keyboard_init();
 

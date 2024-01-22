@@ -94,22 +94,4 @@ struct fat32_directory {
 
 typedef struct fat32_directory fat32_directory;
 
-extern fat32_directory* fat_root_dir;
-
 void fat32_init();
-
-char* fat32_process_name(fat32_entry* entry);
-
-fat32_directory* fat32_find_entry_subdir(char* path);
-fat32_directory* fat32_find_subdir(const char* path);
-
-fat32_entry* fat32_find_entry(fat32_directory* working_dir, const char* filename);
-
-int fat32_read(const char* filename, u8* buffer);
-
-fat32_directory* fat32_traverse_dir(fat32_directory* root_dir, const char* dirname);
-
-int fat32_write(const char* filename, u8* buffer, u32 size, u8 attributes);
-int fat32_overwrite(const char* filename, u8* buffer, u32 size, u8 attributes);
-
-fat32_entry* fat32_get_absolute_entry(const char* filename);

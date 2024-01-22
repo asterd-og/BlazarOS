@@ -32,11 +32,11 @@ all: $(IMAGE_NAME).iso
 all-hdd: $(IMAGE_NAME).hdd
 
 .PHONY: run
-run: run-kvm clean
+run: run-normal clean
 
 .PHONY: run-normal
 run-normal: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -s -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -no-reboot -no-shutdown -smp 4 -hda drive.txt
+	qemu-system-x86_64 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -no-reboot -no-shutdown -smp 2 -drive file="fat.img",format=raw,index=0,media=disk
 
 .PHONY: run-kvm
 run-kvm: $(IMAGE_NAME).iso
