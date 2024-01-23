@@ -182,18 +182,13 @@ u16 pci_read_word(u8 bus, u8 slot, u8 func, u8 offset) {
     return (u16)((inl(0xCFC) >> ((offset & 2) * 8)) & 0xFFFF);
 }
 
-u16 pci_get_vendor(u8 bus, u8 slot, u8 func) {
-    u16 vendor = pci_read_word(bus, slot, func, 0);
-    if (vendor == 0xFFFF) return vendor;
-    
-    u16 device = pci_read_word(bus, slot, func, 2);
-
-    printf("Found device: %s\n", pci_get_name(vendor, device));
-}
-
 void pci_init() {
+    u16 vendor, device;
     for (u16 bus = 0; bus < PCI_MAX_BUS; bus++)
         for (u8 slot = 0; slot < PCI_MAX_SLOT; slot++)
-            for (u8 func = 0; func < PCI_MAX_FUNC; func++)
-                pci_get_vendor(bus, slot, func);
+            for (u8 func = 0; func < PCI_MAX_FUNC; func++) {
+                vendor = pci_read_word(bus, slot, func, 0);
+                if (vendor == 0xFFFF) continue;
+                device = pci_read_word(bus, slot, func, 2);
+            }
 }

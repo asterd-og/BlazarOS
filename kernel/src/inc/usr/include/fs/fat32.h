@@ -5,6 +5,8 @@
 #include <dev/storage/ata.h>
 #include <dev/serial/serial.h>
 
+#include <fs/mbr.h>
+
 #define FAT_ATTR_READ_ONLY 0x01
 #define FAT_ATTR_HIDDEN 0x02
 #define FAT_ATTR_SYSTEM 0x04
@@ -94,4 +96,13 @@ struct fat32_directory {
 
 typedef struct fat32_directory fat32_directory;
 
-void fat32_init();
+typedef struct {
+    fat32_bpb* bpb;
+    fat32_ebpb* ebpb;
+    fat32_directory* root_dir;
+    u32 partition_sector;
+} fat32_fs;
+
+extern fat32_fs* fats[256];
+
+void fat32_init(partition_info pt_info);

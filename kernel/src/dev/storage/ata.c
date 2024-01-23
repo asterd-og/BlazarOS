@@ -46,15 +46,19 @@ void ata_read(u32 lba, u8* buffer, u32 size) {
     outb(ata_io_base + 7, ATA_READ);
 
     u16 val = 0;
+    u32 i = 0;
 
     ata_poll();
 
-    for (u32 i = 0; i < size; i += 2) {
+    for (; i < size; i += 2) {
         val = inw(ata_io_base);
         buffer[i] = val & 0x00ff;
         if (i + 1 < size)
             buffer[i + 1] = (val >> 8) & 0x00ff;
     }
+
+    for (; i < ALIGN_UP(size, 512); i++)
+        inw(ata_io_base);
 
     ata_delay();
 }

@@ -34,6 +34,7 @@
 
 #include <sched/sched.h>
 
+#include <fs/mbr.h>
 #include <fs/fat32.h>
 #include <fs/vfs.h>
 
@@ -160,9 +161,8 @@ void _start(void) {
     serial_printf("SMP Initialised.\n");
 
     pci_init();
-
     ata_init();
-    fat32_init();
+    mbr_init();
     vfs_init();
     dev_init();
 
