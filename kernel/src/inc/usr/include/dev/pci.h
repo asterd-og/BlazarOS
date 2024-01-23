@@ -6,11 +6,18 @@
 
 #include <lib/stdio/printf.h>
 
+#define PCI_BAR0 0x10
+#define PCI_BAR1 0x14
+#define PCI_BAR2 0x18
+#define PCI_BAR3 0x1C
+#define PCI_BAR4 0x20
+#define PCI_BAR5 0x24
+
 #define PCI_MAX_BUS 256
 #define PCI_MAX_SLOT 32
 #define PCI_MAX_FUNC 8
 
-typedef enum {
+enum {
     PCIVENDOR_INTEL                = 0x8086,
     PCIVENDOR_INTEL_ALT            = 0x8087,
     PCIVENDOR_VMWARE               = 0x15AD,

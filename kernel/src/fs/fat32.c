@@ -22,17 +22,6 @@ void fat32_init(partition_info pt_info) {
     fs->root_dir->cluster = ebpb->root_cluster;
     fs->root_dir->sector = fat32_get_sector(fs, ebpb->root_cluster);
 
-    printf("Partition %d:\n", fat_idx);
-
-    fat32_entry entries[4];
-    ata_read(fat32_get_sector(fs, ebpb->root_cluster), (u8*)&entries[0], sizeof(fat32_entry) * 4);
-
-    for (u32 i = 0; i < 4; i++) {
-        if (entries[i].name[0] == 0) break;
-        if (entries[i].attributes & FAT_ATTR_HIDDEN) continue;
-        printf("%s\n", entries[i].name);
-    }
-
     fats[fat_idx] = fs;
     fat_idx++;
 }
