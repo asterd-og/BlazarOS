@@ -14,6 +14,19 @@ typedef struct {
 } __attribute__((packed)) acpi_rsdp;
 
 typedef struct {
+    char sign[8];
+    u8 checksum;
+    char oem_id[6];
+    u8 revision;
+    u32 resv;
+
+    u32 length;
+    u64 xsdt_addr;
+    u8 extended_checksum;
+    u8 resv1[3];
+} __attribute__((packed)) acpi_xsdp;
+
+typedef struct {
     char sign[4];
     u32 len;
     u8 revision;
@@ -26,10 +39,15 @@ typedef struct {
 } __attribute__((packed)) acpi_sdt;
 
 typedef struct {
-    acpi_sdt rsdt;
-    u32 table[];
+    acpi_sdt sdt;
+    char table[];
 } acpi_rsdt;
 
-u32 acpi_init();
+typedef struct {
+    acpi_sdt sdt;
+    char table[];
+} acpi_xsdt;
+
+u64 acpi_init();
 
 void* acpi_find_table(const char* name);

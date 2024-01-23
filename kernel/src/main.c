@@ -136,11 +136,11 @@ void _start(void) {
     }
     serial_printf("BlazFS Initialised.\n");
 
-    u32 rsdt_addr = acpi_init();
-    if (rsdt_addr > 0) {
-        log_info("ACPI: RSDT found at %lx.\n", rsdt_addr);
+    u64 sdt_addr = acpi_init();
+    if (sdt_addr > 0) {
+        serial_printf("ACPI: SDT found at %lx.\n", sdt_addr);
     } else {
-        panic("ACPI: Couldn't find RSDT/Bad RSDP. %d.\n", rsdt_addr);
+        panic("ACPI: Couldn't find SDT/Bad SDP. %d.\n", sdt_addr);
         for (;;) ;
     }
 

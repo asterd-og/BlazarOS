@@ -195,15 +195,12 @@ void pci_init() {
                 vendor = pci_read_word(bus, slot, func, 0);
                 if (vendor == 0xFFFF) continue;
                 device = pci_read_word(bus, slot, func, 2);
-                bars[0] = pci_read_dword(bus, slot, func, PCI_BAR0);
-                bars[1] = pci_read_dword(bus, slot, func, PCI_BAR1);
-                bars[2] = pci_read_dword(bus, slot, func, PCI_BAR2);
-                bars[3] = pci_read_dword(bus, slot, func, PCI_BAR3);
-                bars[4] = pci_read_dword(bus, slot, func, PCI_BAR4);
-                bars[5] = pci_read_dword(bus, slot, func, PCI_BAR5);
-                printf("%s BARs:", pci_get_name(vendor, device));
                 for (int i = 0; i < 6; i++) {
-                    printf("BAR%d: %d\n", i, bars[i]);
+                    bars[i] = pci_read_dword(bus, slot, func, PCI_BAR0 + (sizeof(u32) * i));
+                }
+                printf("%s BARs:\n", pci_get_name(vendor, device));
+                for (int i = 0; i < 6; i++) {
+                    printf("BAR%d: %x ", i, bars[i]);
                 }
             }
 }

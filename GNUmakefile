@@ -32,7 +32,7 @@ all: $(IMAGE_NAME).iso
 all-hdd: $(IMAGE_NAME).hdd
 
 .PHONY: run
-run: run-normal clean
+run: run-kvm clean
 
 .PHONY: run-normal
 run-normal: $(IMAGE_NAME).iso
@@ -44,7 +44,8 @@ run-kvm: $(IMAGE_NAME).iso
 
 .PHONY: run-uefi
 run-uefi: ovmf $(IMAGE_NAME).iso
-	qemu-system-x86_64 -M q35 -m 2G -bios ovmf/OVMF.fd -cdrom $(IMAGE_NAME).iso -boot d
+	qemu-system-x86_64 -M q35 -m 2G -bios /usr/share/ovmf/OVMF.fd -boot d -serial stdio -accel kvm -smp 4 -device piix3-ide,id=ide -drive id=disk,file="fat.img",format=raw,if=none -device ide-hd,drive=disk,bus=ide.0 \
+        -drive file=$(IMAGE_NAME).iso,format=raw,if=none,id=cdrom -device ide-cd,bus=ide.1,drive=cdrom -M q35
 
 .PHONY: run-hdd
 run-hdd: $(IMAGE_NAME).hdd
