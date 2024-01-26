@@ -32,7 +32,7 @@ all: $(IMAGE_NAME).iso
 all-hdd: $(IMAGE_NAME).hdd
 
 .PHONY: run
-run: run-kvm clean
+run: run-kvm
 
 .PHONY: run-normal
 run-normal: $(IMAGE_NAME).iso

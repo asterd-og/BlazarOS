@@ -198,9 +198,5 @@ void pci_init() {
                 for (int i = 0; i < 6; i++) {
                     bars[i] = pci_read_dword(bus, slot, func, PCI_BAR0 + (sizeof(u32) * i));
                 }
-                printf("%s BARs:\n", pci_get_name(vendor, device));
-                for (int i = 0; i < 6; i++) {
-                    printf("BAR%d: %x ", i, bars[i]);
-                }
             }
 }

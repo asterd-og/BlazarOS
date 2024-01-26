@@ -11,6 +11,17 @@ void* kmalloc(size_t size) {
     return (ptr + sizeof(heap_memory_block));
 }
 
+void* krealloc(void* ptr, size_t size) {
+    void* new_ptr = kmalloc(size);
+    if (ptr != NULL) {
+        void* obj = (ptr - sizeof(heap_memory_block));
+        heap_memory_block* memory_block = (heap_memory_block*)obj;
+        memcpy(new_ptr, ptr, memory_block->pages * PAGE_SIZE);
+        kfree(ptr);
+    }
+    return new_ptr;
+}
+
 void kfree(void* ptr) {
     if (ptr == NULL) return;
     void* obj = (ptr - sizeof(heap_memory_block));

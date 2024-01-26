@@ -160,7 +160,7 @@ void _start(void) {
 
     serial_printf("SMP Initialised.\n");
 
-    pci_init();
+    //pci_init();
     ata_init();
     mbr_init();
     vfs_init();
