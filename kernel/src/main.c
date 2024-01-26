@@ -38,6 +38,8 @@
 #include <fs/fat32.h>
 #include <fs/vfs.h>
 
+#include <lib/hashmap.h>
+
 // Set the base revision to 1, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
 // See specification for further info.
@@ -159,6 +161,10 @@ void _start(void) {
     }
 
     serial_printf("SMP Initialised.\n");
+
+    hashmap_table* map = hashmap_init(10, 25, 5);
+    hashmap_push(map, "hey", "hello world!\n");
+    printf("%s", hashmap_get(map, "hey"));
 
     //pci_init();
     ata_init();
