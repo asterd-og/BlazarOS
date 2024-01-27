@@ -162,9 +162,13 @@ void _start(void) {
 
     serial_printf("SMP Initialised.\n");
 
-    hashmap_table* map = hashmap_init(10, 25, 5);
+    hashmap_table* map = hashmap_init(10, 40, 5);
     hashmap_push(map, "hey", "hello world!\n");
+    hashmap_push(map, "hello", "damn these hashes are good!\n");
+    hashmap_push(map, "yeh", "ik how to hash!\n");
     printf("%s", hashmap_get(map, "hey"));
+    printf("%s", hashmap_get(map, "hello"));
+    printf("%s", hashmap_get(map, "yeh"));
 
     //pci_init();
     ata_init();

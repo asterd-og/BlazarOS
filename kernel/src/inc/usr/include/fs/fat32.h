@@ -5,6 +5,8 @@
 #include <dev/storage/ata.h>
 #include <dev/serial/serial.h>
 
+#include <lib/hashmap.h>
+
 #include <fs/mbr.h>
 
 #define FAT_ATTR_READ_ONLY 0x01
@@ -92,7 +94,7 @@ struct fat32_directory {
     u32 file_count;
     u32 sector;
     u32 cluster;
-};
+} __attribute__((packed));
 
 typedef struct fat32_directory fat32_directory;
 
@@ -101,7 +103,8 @@ typedef struct {
     fat32_ebpb* ebpb;
     fat32_directory* root_dir;
     u32 partition_sector;
-} fat32_fs;
+    hashmap_table* cache_hashmap;
+} __attribute__((packed)) fat32_fs;
 
 extern fat32_fs* fats[256];
 
