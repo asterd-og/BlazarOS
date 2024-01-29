@@ -131,8 +131,8 @@ void _start(void) {
     vmm_init();
     serial_printf("VMM Initialised.\n");
 
-    ata_init();
-    mbr_init();
+    // ata_init();
+    // mbr_init();
 
     u64 sdt_addr = acpi_init();
     if (sdt_addr > 0) {

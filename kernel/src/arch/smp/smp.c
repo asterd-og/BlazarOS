@@ -17,7 +17,7 @@ void smp_init_cpu(struct limine_smp_info* smp_info) {
 
     lapic_init();
     
-    while (smp_cpu_started < smp_info->processor_id - 1) {
+    while (smp_cpu_started < smp_info->lapic_id - 1) {
         __asm__ ("nop");
     }
 
@@ -29,12 +29,12 @@ void smp_init_cpu(struct limine_smp_info* smp_info) {
     cpu->proc_idx = 0;
     cpu->current_proc = NULL;
 
-    smp_cpu_list[smp_info->processor_id] = cpu;
+    smp_cpu_list[smp_info->lapic_id] = cpu;
 
     sched_init();
 
-    log_info("CPU %lx is up.\n", smp_info->processor_id);
-    log_info("CPU %lx lapic id: %x\n", smp_info->processor_id, lapic_get_id());
+    log_info("CPU %lx is up.\n", smp_info->lapic_id);
+    log_info("CPU %lx lapic id: %x\n", smp_info->lapic_id, lapic_get_id());
     smp_cpu_started++;
 
     while (true) {
