@@ -6,7 +6,7 @@
 fat32_directory* fat32_get_dir(fat32_fs* fs, const char* path) {
     fat32_directory* root_dir = hashmap_get(fs->cache_hashmap, path);
     if (root_dir != NULL) /* Directory has been hashed/cached already, return that.*/
-       return root_dir;
+        return root_dir;
     root_dir = (fat32_directory*)kmalloc(sizeof(fat32_directory));
     fat32_entry* entry = fat32_get_entry(fs, fs->root_dir, path);
     memset(0, root_dir, sizeof(fat32_directory));

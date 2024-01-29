@@ -73,6 +73,7 @@ void isr_handler(registers* regs) {
     __asm__ volatile("cli");
 
     panic("System Fault!\nMessage: %s\n", isr_errors[regs->int_no]);
+    serial_printf("System Fault CPU %d\n", lapic_get_id());
 
     for (;;) __asm__ volatile("hlt");
 }

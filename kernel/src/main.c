@@ -163,7 +163,10 @@ void _start(void) {
     sched_init();
     pit_init();
 
+    serial_printf("Tasking Initialised.\n");
+
     // We're done, just hang...
-    for (;;)
-        __asm__ ("hlt");
+    while (true) {
+        __asm__ ("nop");
+    }
 }

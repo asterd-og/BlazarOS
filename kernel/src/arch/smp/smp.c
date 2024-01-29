@@ -56,6 +56,8 @@ void smp_init() {
     cpu_info* cpu0 = (cpu_info*)kmalloc(sizeof(cpu_info));
     cpu0->lock = false;
     cpu0->lapic_id = 0;
+    cpu0->proc_size = 0;
+    cpu0->proc_idx = 0;
     cpu0->current_proc = NULL;
     smp_cpu_list[0] = cpu0;
 
