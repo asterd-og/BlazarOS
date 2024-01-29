@@ -106,6 +106,10 @@ typedef struct {
     hashmap_table* cache_hashmap;
 } __attribute__((packed)) fat32_fs;
 
-extern fat32_fs* fats[256];
+fat32_fs* fat32_init(partition_info pt_info);
+fat32_fs* fat32_get_partition(u32 pt_num);
 
-void fat32_init(partition_info pt_info);
+u32 fat32_get_sector(fat32_fs* fs, u32 cluster);
+u32 fat32_read_cluster_end(fat32_fs* fs, u32 cluster);
+void fat32_populate_dir(fat32_fs* fs, fat32_directory* dir);
+fat32_entry* fat32_get_entry(fat32_fs* fs, fat32_directory* dir, const char* name);

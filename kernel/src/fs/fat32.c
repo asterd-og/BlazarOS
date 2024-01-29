@@ -1,27 +1,22 @@
 #include <fs/fat32.h>
 #include <mm/heap/heap.h>
 
-fat32_fs* fats[256];
-int fat_idx = 0;
-
-u32 fat32_get_sector(fat32_fs* fs, u32 cluster);
-u32 fat32_read_cluster_end(fat32_fs* fs, u32 cluster);
-void fat32_populate_dir(fat32_fs* fs, fat32_directory* dir);
-fat32_entry* fat32_get_entry(fat32_fs* fs, fat32_directory* dir, const char* name);
+// For some reason my fat32 doesn't works with KASLR! lmao...
 
 fat32_directory* fat32_get_dir(fat32_fs* fs, const char* path) {
     fat32_directory* root_dir = hashmap_get(fs->cache_hashmap, path);
-    if (root_dir != NULL) /* Directory has been hashed/cached already, return that. */
-        return root_dir;
+    if (root_dir != NULL) /* Directory has been hashed/cached already, return that.*/
+       return root_dir;
     root_dir = (fat32_directory*)kmalloc(sizeof(fat32_directory));
     fat32_entry* entry = fat32_get_entry(fs, fs->root_dir, path);
+    memset(0, root_dir, sizeof(fat32_directory));
+    if (entry == NULL || root_dir == NULL)
+        return NULL;
     root_dir->cluster = ((u32)entry->high_cluster_entry << 16)
                          | ((u32)entry->low_cluster_entry);
     root_dir->sector = fat32_get_sector(fs, root_dir->cluster);
-    root_dir->parent = fs->root_dir;
-    root_dir->own_entry = entry;
     fat32_populate_dir(fs, root_dir);
-    hashmap_push(fs->cache_hashmap, path, (u8*)root_dir);
+    hashmap_push(fs->cache_hashmap, path, root_dir);
     return root_dir;
 }
 
@@ -47,7 +42,7 @@ int fat32_read(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* buf
     return 1;
 }
 
-void fat32_init(partition_info pt_info) {
+fat32_fs* fat32_init(partition_info pt_info) {
     fat32_bpb* bpb = (fat32_bpb*)kmalloc(sizeof(fat32_bpb));
     ata_read(pt_info.relative_sector, bpb, sizeof(fat32_bpb));
     fat32_ebpb* ebpb = (fat32_ebpb*)kmalloc(sizeof(fat32_ebpb));
@@ -65,6 +60,5 @@ void fat32_init(partition_info pt_info) {
 
     fs->cache_hashmap = hashmap_init(256, sizeof(fat32_directory), 25);
 
-    fats[fat_idx] = fs;
-    fat_idx++;
+    return fs;
 }

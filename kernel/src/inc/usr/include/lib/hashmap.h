@@ -22,8 +22,9 @@ typedef struct {
 typedef struct {
     hashmap_info* table;
     size_t item_size;
-    int size;
-    int max_collisions;
+    u64 size;
+    u64 max_collisions;
+    u64 max_items;
 } hashmap_table;
 
 hashmap_table* hashmap_init(int size, int item_size, int max_collisions);

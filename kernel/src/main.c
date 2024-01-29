@@ -36,7 +36,6 @@
 
 #include <fs/mbr.h>
 #include <fs/fat32.h>
-#include <fs/vfs.h>
 
 #include <lib/hashmap.h>
 
@@ -132,11 +131,8 @@ void _start(void) {
     vmm_init();
     serial_printf("VMM Initialised.\n");
 
-    if (blazfs_init(get_mod_addr(0))) {
-        log_bad("BlazFS: Couldn't get boot module (INITRD).\n");
-        for (;;) ;
-    }
-    serial_printf("BlazFS Initialised.\n");
+    ata_init();
+    mbr_init();
 
     u64 sdt_addr = acpi_init();
     if (sdt_addr > 0) {
@@ -161,20 +157,6 @@ void _start(void) {
     }
 
     serial_printf("SMP Initialised.\n");
-
-    hashmap_table* map = hashmap_init(10, 40, 5);
-    hashmap_push(map, "hey", "hello world!\n");
-    hashmap_push(map, "hello", "damn these hashes are good!\n");
-    hashmap_push(map, "yeh", "ik how to hash!\n");
-    printf("%s", hashmap_get(map, "hey"));
-    printf("%s", hashmap_get(map, "hello"));
-    printf("%s", hashmap_get(map, "yeh"));
-
-    //pci_init();
-    ata_init();
-    mbr_init();
-    vfs_init();
-    dev_init();
 
     keyboard_init();
 

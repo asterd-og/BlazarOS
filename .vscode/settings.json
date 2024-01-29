@@ -30,7 +30,8 @@
         "elf.h": "c",
         "vfs.h": "c",
         "stdbool.h": "c",
-        "syscall.h": "c"
+        "syscall.h": "c",
+        "mbr.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
