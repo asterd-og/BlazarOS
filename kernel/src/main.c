@@ -164,6 +164,7 @@ void _start(void) {
     pit_init();
 
     serial_printf("Tasking Initialised.\n");
+    log_ok("Tasking Initialised.\n");
 
     // We're done, just hang...
     while (true) {

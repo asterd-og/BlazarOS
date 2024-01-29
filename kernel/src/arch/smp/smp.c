@@ -61,6 +61,8 @@ void smp_init() {
     cpu0->current_proc = NULL;
     smp_cpu_list[0] = cpu0;
 
+    log_info("%d CPUs detected.\n", count);
+
     for (u64 i = 1; i < count; i++) {
         smp_response->cpus[i]->goto_address = smp_init_cpu;
     }

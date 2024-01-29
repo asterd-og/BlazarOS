@@ -40,7 +40,7 @@ run-normal: $(IMAGE_NAME).iso
 
 .PHONY: run-kvm
 run-kvm: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -accel kvm -smp 4 -drive file="fat.img",format=raw,index=0,media=disk
+	qemu-system-x86_64 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -accel kvm -cpu qemu64 -drive file="fat.img",format=raw,index=0,media=disk
 
 .PHONY: run-uefi
 run-uefi: ovmf $(IMAGE_NAME).iso

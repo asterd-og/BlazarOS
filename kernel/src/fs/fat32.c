@@ -21,25 +21,22 @@ fat32_directory* fat32_get_dir(fat32_fs* fs, const char* path) {
 }
 
 int fat32_read(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* buffer) {
-    for (int i = 0; i < dir->file_count; i++) {
-        if (!memcmp(dir->entries[i].name, filename, strlen(filename))) {
-            fat32_entry entry = dir->entries[i];
-            u32 cluster = ((u32)entry.high_cluster_entry << 16)
-                           | ((u32)entry.low_cluster_entry);
-            
-            ata_read(fat32_get_sector(fs, cluster), buffer, 512);
+    fat32_entry* entry = fat32_get_entry(fs, dir, filename);
+    if (entry == NULL) return 1;
 
-            if (entry.size > 512) {
-                for (int i = 0; i < DIV_ROUND_UP(entry.size, 512); i++) {
-                    cluster = fat32_read_cluster_end(fs, cluster);
-                    ata_read(fat32_get_sector(fs, cluster), buffer + ((i + 1) * 512), 512);
-                }
-            }
+    u32 cluster = ((u32)entry->high_cluster_entry << 16)
+                   | ((u32)entry->low_cluster_entry);
+    
+    ata_read(fat32_get_sector(fs, cluster), buffer, 512);
 
-            return 0;
+    if (entry->size > 512) {
+        for (int i = 0; i < DIV_ROUND_UP(entry->size, 512); i++) {
+            cluster = fat32_read_cluster_end(fs, cluster);
+            ata_read(fat32_get_sector(fs, cluster), buffer + ((i + 1) * 512), 512);
         }
     }
-    return 1;
+
+    return 0;
 }
 
 fat32_fs* fat32_init(partition_info pt_info) {
