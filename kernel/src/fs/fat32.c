@@ -9,7 +9,7 @@ fat32_directory* fat32_get_dir(fat32_fs* fs, const char* path) {
         return root_dir;
     root_dir = (fat32_directory*)kmalloc(sizeof(fat32_directory));
     fat32_entry* entry = fat32_get_entry(fs, fs->root_dir, path);
-    memset(0, root_dir, sizeof(fat32_directory));
+    memset(root_dir, 0, sizeof(fat32_directory));
     if (entry == NULL || root_dir == NULL)
         return NULL;
     root_dir->cluster = ((u32)entry->high_cluster_entry << 16)

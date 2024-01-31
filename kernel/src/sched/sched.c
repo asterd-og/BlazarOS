@@ -1,6 +1,7 @@
 #include <sched/sched.h>
 #include <arch/smp/smp.h>
 #include <dev/serial/serial.h>
+#include <dev/timer/rtc/rtc.h>
 
 bool sched_initialised = false;
 u64 sched_pid = 0;
@@ -123,12 +124,34 @@ void sched_remove_proc(u64 pid) {
     serial_printf("Killed process %ld in CPU %ld.\n", pid, cpu->lapic_id);
 }
 
+u32 sched_get_cpu_load(cpu_info* cpu) {
+    u64 current_time = rtc_get_unix();
+    u64 total_time_since_last_calc = current_time - cpu->total_time;
+    if (total_time_since_last_calc == 0) {
+        return 0;
+    }
+
+    u64 busy_time = total_time_since_last_calc - (current_time - cpu->last_idle_time);
+
+    u32 cpu_load = (u32)((busy_time * 100ULL) / total_time_since_last_calc);
+
+    cpu->total_time = current_time;
+    cpu->last_idle_time = current_time;
+
+    return cpu_load;
+}
+
+void sched_update_usage(cpu_info* cpu) {
+    u64 current_time = rtc_get_unix();  // Replace with the actual function to get the current time
+    cpu->total_time = current_time;
+    cpu->last_idle_time = current_time;
+}
+
 void sched_switch(registers* regs) {
     lock();
     cpu_info* cpu = this_cpu();
-    if (cpu->current_proc != NULL) {
-        cpu->current_proc->regs = *regs;
-    }
+    sched_update_usage(cpu);
+    cpu->current_proc->regs = *regs;
     cpu->current_proc = cpu->proc_list[cpu->proc_idx];
     *regs = cpu->current_proc->regs;
     vmm_switch_pm(cpu->current_proc->pm);
@@ -146,24 +169,21 @@ void sched_switch(registers* regs) {
 
 void lock() {
     if (!sched_initialised) return;
-    if (this_cpu()->lock) return;
     while (__atomic_test_and_set(&(this_cpu()->lock), __ATOMIC_ACQUIRE));
 }
 
 void unlock() {
     if (!sched_initialised) return;
-    if (!this_cpu()->lock) return;
     __atomic_clear(&(this_cpu()->lock), __ATOMIC_RELEASE);
 }
 
 void sched_idle() {
-    while (true) {
-        __asm__ ("nop\n\t");
-    }
+    sched_update_usage(this_cpu());
 }
 
 void sched_init() {
     sched_initialised = true;
+    cpu_info* cpu = this_cpu();
     sched_new_proc(sched_idle, lapic_get_id());
-    irq_register(SCHED_INT_VEC - 32, sched_switch);
+    cpu->current_proc = cpu->proc_list[0];
 }

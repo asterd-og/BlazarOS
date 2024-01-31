@@ -5,7 +5,9 @@ u64 pit_ticks = 0;
 void pit_handler(registers* regs) {
     (void)regs;
     pit_ticks++;
-    lapic_send_all_int(0, SCHED_INT_VEC);
+    if ((pit_ticks % 10) == 0) {
+        lapic_send_all_int(0, SCHED_INT_VEC);
+    }
 }
 
 void pit_reset() {

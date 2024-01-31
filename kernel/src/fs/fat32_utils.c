@@ -1,5 +1,26 @@
 #include <fs/fat32.h>
 
+// PATH FUNCTIONS
+
+char* fat32_normalise_name(const char* name) {
+    char* res = (char*)kmalloc(11);
+    memset(res, 0, 11);
+    int i = 0;
+    int j = 0;
+    for (; i < 8; i++) {
+        if (name[i] == ' ') break;
+        res[i] = name[i];
+    }
+    if (name[10] == ' ' && name[9] == ' ' && name[8] == ' ') return res;
+    res[i] = '.';
+    i++;
+    for(j = 0; j < 3; j++) {
+        if (name[8 + j] == 0 || name[8 + j] == ' ') return res;
+        res[i + j] = name[8 + j];
+    }
+    return res;
+}
+
 u32 fat32_get_sector(fat32_fs* fs, u32 cluster) {
     return ((cluster - 2) * fs->bpb->sectors_per_cluster) + (fs->partition_sector + fs->bpb->resv_sectors + (fs->bpb->fat_count * fs->ebpb->table_size_32));
 }
@@ -27,6 +48,7 @@ void fat32_populate_dir(fat32_fs* fs, fat32_directory* dir) {
     int times_iterated = 0;
     dir->entries = (fat32_entry*)kmalloc(sizeof(fat32_entry) * 16);
     dir->file_count = 0;
+    char* name;
     while (true) {
         ata_read(next_sector, &entries[0], 512);
         for (int i = 0; i < 16; i++) {
@@ -36,6 +58,9 @@ void fat32_populate_dir(fat32_fs* fs, fat32_directory* dir) {
                 // We are iterating the second time!
                 dir->entries = (fat32_entry*)krealloc(dir->entries, (sizeof(fat32_entry) * 16) * (times_iterated + 1));
             }
+            name = fat32_normalise_name(entries[i].name);
+            memcpy(&entries[i].name, name, 11);
+            kfree(name);
             memcpy(&dir->entries[(times_iterated * 16) + i], &entries[i], sizeof(fat32_entry));
             dir->file_count++;
         }

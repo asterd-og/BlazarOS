@@ -27,9 +27,14 @@ typedef struct {
     process* proc_list[256];
     u64 proc_size;
     u64 proc_idx;
+
+    u64 last_idle_time;
+    u64 total_time;
 } __attribute__((packed)) cpu_info;
 
 void smp_init();
 
 cpu_info* this_cpu();
 cpu_info* get_cpu(u64 id);
+
+u32 sched_get_cpu_load(cpu_info* cpu);

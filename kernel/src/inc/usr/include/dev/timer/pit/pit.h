@@ -7,7 +7,7 @@
 
 #include <sched/sched.h>
 
-#define PIT_BASE_FREQ 100
+#define PIT_BASE_FREQ 1000
 
 void pit_init();
 
