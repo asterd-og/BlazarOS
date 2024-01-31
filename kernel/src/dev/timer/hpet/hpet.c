@@ -31,11 +31,14 @@ u64 hpet_timer_int_reg(u64 n) {
     return (0x110 + 0x20 * n);
 }
 
+u64 ticks = 0;
+
 void hpet_handler(registers* regs) {
     (void)regs;
+    ticks++;
     hpet_write_bits(0x20, 1 << 0);
     hpet_write(hpet_timer_comp_reg(0), hpet_read(HPET_COUNTER) + hpet_comp_update);
-    lapic_send_all_int(0, SCHED_INT_VEC);
+    if ((ticks % 100) == 0) lapic_send_all_int(0, SCHED_INT_VEC);
 }
 
 void hpet_init() {
@@ -47,8 +50,8 @@ void hpet_init() {
     u64 hpet_freq = 1000000000000000 / hpet_period;
 
     u64 cur_freq = hpet_freq;
-    if (hpet_freq >= 100) {
-        cur_freq = 100;
+    if (hpet_freq >= 10000) {
+        cur_freq = 10000;
     } else {
         cur_freq = hpet_freq;
     }

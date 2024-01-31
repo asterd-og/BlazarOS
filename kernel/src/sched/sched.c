@@ -179,6 +179,9 @@ void unlock() {
 
 void sched_idle() {
     sched_update_usage(this_cpu());
+    while (true) {
+        __asm__ volatile ("nop");
+    }
 }
 
 void sched_init() {

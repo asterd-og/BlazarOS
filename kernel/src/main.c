@@ -91,24 +91,6 @@ void* get_mod_addr(int pos) {
     return module_request.response->modules[pos]->address;
 }
 
-void cpu_stress_test() {
-    while (1) {
-        for (int i = 0; i < 1000000; ++i) {
-            __asm__ volatile ("nop");
-        }
-    }
-}
-
-void task1() {
-    while (1) {
-        for (u64 i = 0; i < smp_cpu_count; i++) {
-            u64 cpu_load = sched_get_cpu_load(get_cpu(i));
-            if (cpu_load > 0)
-                printf("CPU%ld usage: %ld%%\n", i, cpu_load);
-        }
-    }
-}
-
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
 // linker script accordingly.
@@ -176,12 +158,9 @@ void _start(void) {
 
     keyboard_init();
 
-    pit_init();
+    hpet_init();
     sched_init();
-    sched_new_proc(cpu_stress_test, 2);
-    sched_new_proc(task1, 1);
     irq_register(SCHED_INT_VEC - 32, sched_switch);
-    serial_printf("Tasking Initialised.\n");
 
     // We're done, just hang...
     while (true) {
