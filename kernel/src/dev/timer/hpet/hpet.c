@@ -38,7 +38,9 @@ void hpet_handler(registers* regs) {
     ticks++;
     hpet_write_bits(0x20, 1 << 0);
     hpet_write(hpet_timer_comp_reg(0), hpet_read(HPET_COUNTER) + hpet_comp_update);
-    if ((ticks % 100) == 0) lapic_send_all_int(0, SCHED_INT_VEC);
+    if ((ticks % 50) == 0) {
+        lapic_send_all_int(0, SCHED_INT_VEC);
+    }
 }
 
 void hpet_init() {

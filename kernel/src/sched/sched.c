@@ -16,7 +16,7 @@ void sched_wrapper(u64 func) {
     }
 }
 
-process* sched_new_proc(void* func, u64 cpu_id) {
+process* sched_new_proc(void* func, u64 cpu_id, u8 priority) {
     lock();
 
     if (get_cpu(cpu_id) == NULL) {
@@ -28,6 +28,7 @@ process* sched_new_proc(void* func, u64 cpu_id) {
 
     proc->PID = sched_pid;
     proc->pm = vmm_new_pm();
+    proc->priority = priority;
     proc->state = PROC_RUNNING;
     proc->cpu_id = cpu_id;
 
@@ -49,7 +50,7 @@ process* sched_new_proc(void* func, u64 cpu_id) {
     return proc;
 }
 
-process* sched_new_elf(void* elf, u64 cpu_id) {
+process* sched_new_elf(void* elf, u64 cpu_id, u8 priority) {
     lock();
 
     if (get_cpu(cpu_id) == NULL) {
@@ -61,6 +62,7 @@ process* sched_new_elf(void* elf, u64 cpu_id) {
 
     proc->PID = sched_pid;
     proc->pm = vmm_new_pm();
+    proc->priority = priority;
     proc->state = PROC_RUNNING;
     proc->cpu_id = cpu_id;
 
@@ -111,7 +113,7 @@ void sched_remove_proc(u64 pid) {
     cpu_info* cpu = get_cpu(proc->cpu_id);
 
     if (proc == NULL) {
-        serial_printf("Sched: Couldn't kill proc %lx not found.\n", pid);
+        panic("Sched: Couldn't kill proc %lx not found.\n", pid);
         return;
     }
 
@@ -121,7 +123,6 @@ void sched_remove_proc(u64 pid) {
     kfree(proc);
 
     cpu->proc_size--;
-    serial_printf("Killed process %ld in CPU %ld.\n", pid, cpu->lapic_id);
 }
 
 u32 sched_get_cpu_load(cpu_info* cpu) {
@@ -150,6 +151,13 @@ void sched_update_usage(cpu_info* cpu) {
 void sched_switch(registers* regs) {
     lock();
     cpu_info* cpu = this_cpu();
+    if (cpu->proc_pr_count == cpu->current_proc->priority) { // X ticks / 50
+        cpu->proc_pr_count = 1;
+    } else {
+        cpu->proc_pr_count++;
+        unlock();
+        return;
+    }
     sched_update_usage(cpu);
     cpu->current_proc->regs = *regs;
     cpu->current_proc = cpu->proc_list[cpu->proc_idx];
@@ -187,6 +195,6 @@ void sched_idle() {
 void sched_init() {
     sched_initialised = true;
     cpu_info* cpu = this_cpu();
-    sched_new_proc(sched_idle, lapic_get_id());
+    sched_new_proc(sched_idle, lapic_get_id(), PROC_PR_LOW);
     cpu->current_proc = cpu->proc_list[0];
 }

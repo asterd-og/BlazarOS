@@ -11,14 +11,10 @@ void serial_write_char(char c, void* extra) {
 }
 
 void serial_printf(const char* format, ...) {
-    lock();
-    
     va_list args;
     va_start(args, format);
     vfctprintf(serial_write_char, NULL, format, args);
     va_end(args);
-    
-    unlock();
 }
 
 void serial_init() {
