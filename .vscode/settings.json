@@ -31,7 +31,9 @@
         "vfs.h": "c",
         "stdbool.h": "c",
         "syscall.h": "c",
-        "mbr.h": "c"
+        "mbr.h": "c",
+        "ssfn.h": "c",
+        "framebuffer.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

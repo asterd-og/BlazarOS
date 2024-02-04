@@ -36,15 +36,19 @@ run: run-kvm
 
 .PHONY: run-normal
 run-normal: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -no-reboot -no-shutdown -smp 2 -drive file="fat.img",format=raw,index=0,media=disk
+	qemu-system-x86_64 -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -no-reboot -no-shutdown -smp $(shell nproc) -drive file="fat.img",format=raw,index=0,media=disk
 
 .PHONY: run-kvm
 run-kvm: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -accel kvm -smp 4 -drive file="fat.img",format=raw,index=0,media=disk
+	qemu-system-x86_64 -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -accel kvm -smp $(shell nproc) -drive file="fat.img",format=raw,index=0,media=disk
+
+.PHONY: run-kvm-rtl8139
+run-kvm-rtl8139: $(IMAGE_NAME).iso
+	qemu-system-x86_64 -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -accel kvm -smp $(shell nproc) -drive file="fat.img",format=raw,index=0,media=disk -netdev tap,id=net0,ifname=tap0,script=no,downscript=no -device rtl8139,netdev=net0,mac=52:54:00:12:34:55
 
 .PHONY: run-uefi
 run-uefi: ovmf $(IMAGE_NAME).iso
-	qemu-system-x86_64 -M q35 -m 2G -bios /usr/share/ovmf/OVMF.fd -boot d -serial stdio -accel kvm -smp 4 -device piix3-ide,id=ide -drive id=disk,file="fat.img",format=raw,if=none -device ide-hd,drive=disk,bus=ide.0 \
+	qemu-system-x86_64 -M q35 -m 2G -bios /usr/share/ovmf/OVMF.fd -boot d -serial stdio -accel kvm -smp $(shell nproc) -device piix3-ide,id=ide -drive id=disk,file="fat.img",format=raw,if=none -device ide-hd,drive=disk,bus=ide.0 \
         -drive file=$(IMAGE_NAME).iso,format=raw,if=none,id=cdrom -device ide-cd,bus=ide.1,drive=cdrom -M q35
 
 .PHONY: run-hdd

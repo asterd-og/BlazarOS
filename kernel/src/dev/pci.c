@@ -1,4 +1,6 @@
 #include <dev/pci.h>
+#include <arch/acpi/mcfg.h>
+#include <arch/acpi/acpi.h>
 
 /* Thanks to https://github.com/KM198912 */
 const char* pci_get_name(uint16_t vendor_id, uint16_t device_id)
@@ -14,7 +16,7 @@ const char* pci_get_name(uint16_t vendor_id, uint16_t device_id)
             case 0x7020: { return "Intel 82371SB PIIX3 USB"; }
             case 0x7111: { return "Intel 82371AB/EB/MB PIIX4 IDE"; }
             case 0x7113: { return "Intel 82371AB/EB/MB PIIX4 ACPI"; }
-            case 0x100E: { return "Intel 82540EM Ethernet Controller"; }
+            case 0x100E: { return "82540EM Gigabit Ethernet Controller"; }
             case 0x0041: { return "Intel Core PCI Express x16 Root Port"; }
             case 0x0042: { return "Intel Core IGPU Controller"; }
             case 0x0044: { return "Intel Core DRAM Controller"; }
@@ -59,7 +61,8 @@ const char* pci_get_name(uint16_t vendor_id, uint16_t device_id)
     {
         switch (device_id)
         {
-            default: { return "Unrecognized Intel Device"; }
+            case 0x100E: { return "Intel 82540EM Ethernet Controller"; }
+            default: { return "Unrecognized Intel ALT Device"; }
         }
     }
 
@@ -147,6 +150,7 @@ const char* pci_get_name(uint16_t vendor_id, uint16_t device_id)
         {
             case 0x5289: { return "Realtek RTL8411 PCI Express Card Reader"; }
             case 0x8168: { return "Realtek RTL8111/8168/8411 Ethernet PCI-E"; }
+            case 0x8139: { return "Realtek RTL8100/8101L/8139 Ethernet PCI-E"; }
             default: { return "Unrecognized Realtek Device"; }
         }
     }
@@ -189,7 +193,11 @@ u32 pci_read_dword(u8 bus, u8 slot, u8 func, u8 offset) {
 void pci_init() {
     u16 vendor, device;
     u32 bars[6];
-    for (u16 bus = 0; bus < PCI_MAX_BUS; bus++)
+
+    acpi_mcfg* mcfg = acpi_find_table("MCFG");
+
+    mcfg_entry* entry = &mcfg->table[0];
+    for (u64 bus = entry->first_bus; bus < entry->last_bus; bus++)
         for (u8 slot = 0; slot < PCI_MAX_SLOT; slot++)
             for (u8 func = 0; func < PCI_MAX_FUNC; func++) {
                 vendor = pci_read_word(bus, slot, func, 0);
@@ -198,5 +206,6 @@ void pci_init() {
                 for (int i = 0; i < 6; i++) {
                     bars[i] = pci_read_dword(bus, slot, func, PCI_BAR0 + (sizeof(u32) * i));
                 }
+                printf("\n%s\n", pci_get_name(vendor, device));
             }
 }

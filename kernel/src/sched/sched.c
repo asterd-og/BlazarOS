@@ -151,15 +151,16 @@ void sched_update_usage(cpu_info* cpu) {
 void sched_switch(registers* regs) {
     lock();
     cpu_info* cpu = this_cpu();
-    if (cpu->proc_pr_count == cpu->current_proc->priority) { // X ticks / 50
-        cpu->proc_pr_count = 1;
-    } else {
-        cpu->proc_pr_count++;
-        unlock();
-        return;
+    if (cpu->current_proc != NULL) {
+        if (cpu->proc_pr_count == cpu->current_proc->priority)
+            cpu->proc_pr_count = 0;
+        else {
+            cpu->proc_pr_count++;
+            unlock();
+            return;
+        }
+        cpu->current_proc->regs = *regs;
     }
-    sched_update_usage(cpu);
-    cpu->current_proc->regs = *regs;
     cpu->current_proc = cpu->proc_list[cpu->proc_idx];
     *regs = cpu->current_proc->regs;
     vmm_switch_pm(cpu->current_proc->pm);
@@ -186,7 +187,6 @@ void unlock() {
 }
 
 void sched_idle() {
-    sched_update_usage(this_cpu());
     while (true) {
         __asm__ volatile ("nop");
     }
@@ -196,5 +196,5 @@ void sched_init() {
     sched_initialised = true;
     cpu_info* cpu = this_cpu();
     sched_new_proc(sched_idle, lapic_get_id(), PROC_PR_LOW);
-    cpu->current_proc = cpu->proc_list[0];
+    cpu->current_proc = NULL;
 }

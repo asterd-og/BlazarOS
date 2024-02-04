@@ -29,6 +29,8 @@ void keyboard_handler(registers* regs) {
                 break;
         }
     } else {
+        keyboard_pressed = false;
+        keyboard_char = 0;
         switch (key) {
             case 0xaa:
                 // Shift
@@ -39,14 +41,7 @@ void keyboard_handler(registers* regs) {
 }
 
 char keyboard_get() {
-    lock();
-    if (keyboard_pressed) {
-        keyboard_pressed = false;
-        unlock();
-        return keyboard_char;
-    }
-    unlock();
-    return 0;
+    return keyboard_char;
 }
 
 void keyboard_init() {

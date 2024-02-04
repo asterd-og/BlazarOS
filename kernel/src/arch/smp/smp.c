@@ -32,7 +32,7 @@ void smp_init_cpu(struct limine_smp_info* smp_info) {
     cpu->last_idle_time = 0;
     cpu->total_time = 0;
 
-    cpu->proc_pr_count = 1;
+    cpu->proc_pr_count = 0;
 
     smp_cpu_list[smp_info->lapic_id] = cpu;
 
@@ -64,7 +64,7 @@ void smp_init() {
     cpu0->proc_size = 0;
     cpu0->proc_idx = 0;
     cpu0->current_proc = NULL;
-    cpu0->proc_pr_count = 1;
+    cpu0->proc_pr_count = 0;
     cpu0->last_idle_time = 0;
     cpu0->total_time = 0;
     smp_cpu_list[0] = cpu0;

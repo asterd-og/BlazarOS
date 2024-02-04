@@ -41,6 +41,8 @@
 
 #include <dev/timer/rtc/rtc.h>
 
+#include <video/framebuffer.h>
+
 // Set the base revision to 1, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
 // See specification for further info.
@@ -91,6 +93,8 @@ void* get_mod_addr(int pos) {
     return module_request.response->modules[pos]->address;
 }
 
+framebuffer_info* vbe;
+
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
 // linker script accordingly.
@@ -133,6 +137,8 @@ void _start(void) {
     vmm_init();
     serial_printf("VMM Initialised.\n");
 
+    blazfs_init(get_mod_addr(0));
+
     ata_init();
     mbr_init();
 
@@ -157,6 +163,16 @@ void _start(void) {
     serial_printf("SMP Initialised.\n");
 
     keyboard_init();
+
+    vbe = fb_create(framebuffer->address, framebuffer->width, framebuffer->height, framebuffer->pitch);
+
+    u8* font_buffer = kmalloc(blazfs_ftell("Vera.sfn"));
+    blazfs_read("Vera.sfn", font_buffer);
+
+    fb_set_font(vbe, SSFN_FAMILY_ANY, 32, font_buffer);
+    fb_draw_str(vbe, 500, 500, 0xFFFFFFFF, "hello world!");
+
+    fb_set_pixel(vbe, 50, 50, 0xFFFFFFFF);
 
     hpet_init();
     sched_init();

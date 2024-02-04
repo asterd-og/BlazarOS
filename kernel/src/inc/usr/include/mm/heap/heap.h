@@ -17,3 +17,7 @@ typedef struct {
 void* kmalloc(size_t size);
 void* krealloc(void* ptr, size_t size);
 void kfree(void* ptr);
+
+void* malloc(size_t size);
+void* realloc(void* ptr, size_t size);
+void free(void* ptr);
