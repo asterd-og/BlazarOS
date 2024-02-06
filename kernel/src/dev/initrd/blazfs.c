@@ -1,10 +1,10 @@
 #include <dev/initrd/blazfs.h>
 
-blazfs_head_info* blazfs_head;
-char* blazfs_addr;
+blazfs_head_info* blazfs_head = NULL;
+char* blazfs_addr = NULL;
 
 int blazfs_read(const char* file_name, char* buffer) {
-    blazfs_file_info* blazfs_file;
+    blazfs_file_info* blazfs_file = NULL;
     
     for (size_t i = 0; i < blazfs_head->file_count; i++) {
         blazfs_file = (blazfs_file_info*)(blazfs_addr + (sizeof(blazfs_head_info) + (sizeof(blazfs_file_info) * i)));
@@ -18,7 +18,7 @@ int blazfs_read(const char* file_name, char* buffer) {
 }
 
 size_t blazfs_ftell(const char* file_name) {
-    blazfs_file_info* blazfs_file;
+    blazfs_file_info* blazfs_file = NULL;
     
     for (size_t i = 0; i < blazfs_head->file_count; i++) {
         blazfs_file = (blazfs_file_info*)(blazfs_addr + (sizeof(blazfs_head_info) + (sizeof(blazfs_file_info) * i)));
