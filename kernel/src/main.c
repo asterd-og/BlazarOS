@@ -10,6 +10,7 @@
 #include <dev/serial/serial.h>
 
 #include <dev/ps2/keyboard.h>
+#include <dev/ps2/mouse.h>
 
 #include <dev/timer/pit/pit.h>
 #include <dev/timer/hpet/hpet.h>
@@ -38,10 +39,13 @@
 #include <fs/fat32.h>
 
 #include <lib/hashmap.h>
+#include <lib/atomic.h>
 
 #include <dev/timer/rtc/rtc.h>
 
 #include <video/framebuffer.h>
+#include <video/libs/tga.h>
+#include <video/vbe.h>
 
 // Set the base revision to 1, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
@@ -57,7 +61,7 @@ struct limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
     .revision = 0
 };
-
+struct limine_framebuffer *framebuffer;
 struct flanterm_context *ft_ctx;
 
 // HHDM
@@ -93,7 +97,12 @@ void* get_mod_addr(int pos) {
     return module_request.response->modules[pos]->address;
 }
 
-framebuffer_info* vbe;
+void vbe_task() {
+    while (1) {
+        fb_clear(vbe, 0xFFFFFFFF);
+        vbe_swap();
+    }
+}
 
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
@@ -112,7 +121,7 @@ void _start(void) {
 
     hhdm_offset = hhdm_request.response->offset;
 
-    struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
+    framebuffer = framebuffer_request.response->framebuffers[0];
 
     ft_ctx = flanterm_fb_simple_init(
         framebuffer->address, framebuffer->width,
@@ -162,20 +171,16 @@ void _start(void) {
 
     serial_printf("SMP Initialised.\n");
 
+    mouse_init();
     keyboard_init();
 
-    vbe = fb_create(framebuffer->address, framebuffer->width, framebuffer->height, framebuffer->pitch);
+    vbe_init(framebuffer);
 
-    u8* font_buffer = kmalloc(blazfs_ftell("Vera.sfn"));
-    blazfs_read("Vera.sfn", font_buffer);
-
-    fb_set_font(vbe, SSFN_FAMILY_ANY, 32, font_buffer);
-    fb_draw_str(vbe, 500, 500, 0xFFFFFFFF, "hello world!");
-
-    fb_set_pixel(vbe, 50, 50, 0xFFFFFFFF);
+    // Idea: make a black on white terminal
 
     hpet_init();
     sched_init();
+    sched_new_proc(vbe_task, 1, PROC_PR_HIGH);
     irq_register(SCHED_INT_VEC - 32, sched_switch);
 
     // We're done, just hang...

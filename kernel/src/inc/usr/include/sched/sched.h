@@ -47,6 +47,3 @@ process* sched_get_proc(u64 pid);
 void sched_kill();
 
 void sched_switch(registers* regs);
-
-void lock();
-void unlock();

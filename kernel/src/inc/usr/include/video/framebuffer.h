@@ -20,4 +20,8 @@ void fb_draw_str(framebuffer_info* fb, u32 x, u32 y, u32 color, char* c);
 
 void fb_set_pixel(framebuffer_info* fb, u32 x, u32 y, u32 color);
 
+void fb_draw_tga(framebuffer_info* fb, u32 x, u32 y, u32* tga);
+
+void fb_clear(framebuffer_info* fb, u32 color);
+
 extern framebuffer_info* vbe;

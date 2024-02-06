@@ -33,7 +33,9 @@
         "syscall.h": "c",
         "mbr.h": "c",
         "ssfn.h": "c",
-        "framebuffer.h": "c"
+        "framebuffer.h": "c",
+        "tga.h": "c",
+        "atomic.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

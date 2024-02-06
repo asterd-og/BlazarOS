@@ -2,22 +2,25 @@
 #include <arch/smp/smp.h>
 #include <dev/serial/serial.h>
 #include <dev/timer/rtc/rtc.h>
+#include <lib/atomic.h>
 
 bool sched_initialised = false;
 u64 sched_pid = 0;
 
+locker_info sched_lock;
+
 void sched_wrapper(u64 func) {
     ((u64(*)())func)();
-    lock();
+    lock(&sched_lock);
     this_cpu()->current_proc->state = PROC_DEAD;
-    unlock();
+    unlock(&sched_lock);
     for (;;) {
         __asm__ ("hlt");
     }
 }
 
 process* sched_new_proc(void* func, u64 cpu_id, u8 priority) {
-    lock();
+    lock(&sched_lock);
 
     if (get_cpu(cpu_id) == NULL) {
         serial_printf("Sched error: Non-existent CPU %lx\n", cpu_id);
@@ -45,13 +48,13 @@ process* sched_new_proc(void* func, u64 cpu_id, u8 priority) {
     get_cpu(cpu_id)->proc_list[get_cpu(cpu_id)->proc_size] = proc;
     sched_pid++;
     get_cpu(cpu_id)->proc_size++;
-    unlock();
+    unlock(&sched_lock);
 
     return proc;
 }
 
 process* sched_new_elf(void* elf, u64 cpu_id, u8 priority) {
-    lock();
+    lock(&sched_lock);
 
     if (get_cpu(cpu_id) == NULL) {
         serial_printf("Sched error: Non-existent CPU %lx\n", cpu_id);
@@ -70,7 +73,7 @@ process* sched_new_elf(void* elf, u64 cpu_id, u8 priority) {
     if (entry_point == -1) {
         serial_printf("Couldn't open elf!\n");
         kfree(proc);
-        unlock();
+        unlock(&sched_lock);
         return NULL;
     }
 
@@ -86,15 +89,15 @@ process* sched_new_elf(void* elf, u64 cpu_id, u8 priority) {
     get_cpu(cpu_id)->proc_list[get_cpu(cpu_id)->proc_size] = proc;
     sched_pid++;
     get_cpu(cpu_id)->proc_size++;
-    unlock();
+    unlock(&sched_lock);
 
     return proc;
 }
 
 void sched_kill() {
-    lock();
+    lock(&sched_lock);
     this_cpu()->current_proc->state = PROC_DEAD;
-    unlock();
+    unlock(&sched_lock);
 }
 
 process* sched_get_proc(u64 pid) {
@@ -149,14 +152,14 @@ void sched_update_usage(cpu_info* cpu) {
 }
 
 void sched_switch(registers* regs) {
-    lock();
+    lock(&sched_lock);
     cpu_info* cpu = this_cpu();
     if (cpu->current_proc != NULL) {
         if (cpu->proc_pr_count == cpu->current_proc->priority)
             cpu->proc_pr_count = 0;
         else {
             cpu->proc_pr_count++;
-            unlock();
+            unlock(&sched_lock);
             return;
         }
         cpu->current_proc->regs = *regs;
@@ -173,17 +176,7 @@ void sched_switch(registers* regs) {
         sched_remove_proc(cpu->proc_list[cpu->proc_idx]->PID);
         cpu->proc_idx = 0;
     }
-    unlock();
-}
-
-void lock() {
-    if (!sched_initialised) return;
-    while (__atomic_test_and_set(&(this_cpu()->lock), __ATOMIC_ACQUIRE));
-}
-
-void unlock() {
-    if (!sched_initialised) return;
-    __atomic_clear(&(this_cpu()->lock), __ATOMIC_RELEASE);
+    unlock(&sched_lock);
 }
 
 void sched_idle() {

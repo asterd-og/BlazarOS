@@ -40,7 +40,7 @@ run-normal: $(IMAGE_NAME).iso
 
 .PHONY: run-kvm
 run-kvm: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -accel kvm -smp $(shell nproc) -drive file="fat.img",format=raw,index=0,media=disk
+	qemu-system-x86_64 -m 2G -cdrom $(IMAGE_NAME).iso -boot d -serial stdio -accel kvm -smp $(shell nproc) -drive file="fat.img",format=raw,index=0,media=disk
 
 .PHONY: run-kvm-rtl8139
 run-kvm-rtl8139: $(IMAGE_NAME).iso
