@@ -7,7 +7,7 @@
 bool sched_initialised = false;
 u64 sched_pid = 0;
 
-locker_info sched_lock;
+locker_info sched_lock = {.locked = false};
 
 void sched_wrapper(u64 func) {
     ((u64(*)())func)();

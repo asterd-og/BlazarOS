@@ -61,8 +61,8 @@ struct limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
     .revision = 0
 };
-struct limine_framebuffer *framebuffer;
-struct flanterm_context *ft_ctx;
+struct limine_framebuffer *framebuffer = NULL;
+struct flanterm_context *ft_ctx = NULL;
 
 // HHDM
 
@@ -71,7 +71,7 @@ struct limine_hhdm_request hhdm_request = {
     .revision = 0
 };
 
-u64 hhdm_offset;
+u64 hhdm_offset = 0;
 
 // Modules
 

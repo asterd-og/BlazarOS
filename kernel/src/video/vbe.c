@@ -4,12 +4,12 @@
 #include <dev/initrd/blazfs.h>
 #include <lib/atomic.h>
 
-struct limine_framebuffer_response* limine_fb;
-u32* lfb_buffer;
-u32* vbe_buffer;
-u32 vbe_size;
-framebuffer_info* vbe;
-locker_info vbe_lock;
+struct limine_framebuffer_response* limine_fb = NULL;
+u32* lfb_buffer = NULL;
+u32* vbe_buffer = NULL;
+u32 vbe_size = 0;
+framebuffer_info* vbe = NULL;
+locker_info vbe_lock = {.locked = false};
 
 void vbe_init(struct limine_framebuffer* fb) {
     limine_fb = fb;
