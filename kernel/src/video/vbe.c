@@ -20,7 +20,7 @@ void vbe_init(struct limine_framebuffer* fb) {
 
     u8* font_buffer = kmalloc(blazfs_ftell("FreeSans.sfn"));
     blazfs_read("FreeSans.sfn", font_buffer);
-    fb_set_font(vbe, SSFN_FAMILY_ANY, 24, font_buffer);
+    fb_set_font(vbe, SSFN_FAMILY_ANY, 16, font_buffer);
 
     fb_clear(vbe, 0xFFFFFFFF);
 }

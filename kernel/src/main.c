@@ -100,6 +100,7 @@ void* get_mod_addr(int pos) {
 void vbe_task() {
     while (1) {
         fb_clear(vbe, 0xFFFFFFFF);
+        fb_draw_str(vbe, 25, 25, 0xFF000000, "An objection in motion don't ask where I'm going cuz where I'm going is right where I am");
         vbe_swap();
     }
 }
@@ -135,7 +136,6 @@ void _start(void) {
     serial_printf("GDT Initialised.\n");
 
     idt_init();
-    pic_disable();
     serial_printf("IDT Initialised.\n");
 
     log_info("HHDM is %lx\n", hhdm_offset);
@@ -164,6 +164,7 @@ void _start(void) {
     serial_printf("LAPIC Initialised.\n");
 
     ioapic_init();
+    pic_disable();
     serial_printf("IO/APIC Initialised.\n");
 
     log_info("CPU 0 lapic id: %x\n", lapic_get_id());
@@ -175,8 +176,6 @@ void _start(void) {
     keyboard_init();
 
     vbe_init(framebuffer);
-
-    // Idea: make a black on white terminal
 
     hpet_init();
     sched_init();

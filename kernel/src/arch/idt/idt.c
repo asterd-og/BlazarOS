@@ -84,7 +84,8 @@ void irq_handler(registers* regs) {
     if (handler != NULL)
         handler(regs);
     
-    lapic_eoi();
+    if (ioapic_initialised) lapic_eoi();
+    else pic_eoi(regs->int_no - 32);
 }
 
 void idt_reinit() {
@@ -102,6 +103,8 @@ void idt_init() {
     };
 
     __asm__ ("lidt %0" : : "m"(idt_data) : "memory");
+
+    pic_remap();
     
     __asm__ ("sti");
 }

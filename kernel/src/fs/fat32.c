@@ -39,6 +39,32 @@ int fat32_read(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* buf
     return 0;
 }
 
+// TODO: Handle if size is > 512 and then allocate more clusters for it!
+
+int fat32_write(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* buffer, u32 size, u16 attributes) {
+    for (u32 i = 0; i < dir->file_count + 10; i++) {
+        if ((u8)dir->entries[i].name[0] != 0xe5 && (u8)dir->entries[i].name[0] != 0x0) continue;
+        fat32_entry* entry = &dir->entries[i];
+        char* entry_name = fat32_unprocess_name(filename);
+        memcpy(entry->name, entry_name, strlen(entry_name));
+        kfree(entry_name);
+
+        entry->attributes = attributes;
+        u32 cluster = fat32_allocate_cluster(fs);
+
+        entry->high_cluster_entry = (u16)(cluster >> 16);
+        entry->low_cluster_entry = (u16)(cluster & 0xFFFF);
+
+        entry->size = size;
+
+        dir->file_count++;
+        ata_write(fat32_get_sector(fs, cluster), buffer, size);
+        fat32_flush_dir(fs, dir);
+        return 0;
+    }
+    return 1;
+}
+
 fat32_fs* fat32_init(partition_info pt_info) {
     fat32_bpb* bpb = (fat32_bpb*)kmalloc(sizeof(fat32_bpb));
     ata_read(pt_info.relative_sector, bpb, sizeof(fat32_bpb));
@@ -52,6 +78,10 @@ fat32_fs* fat32_init(partition_info pt_info) {
     fs->root_dir = (fat32_directory*)kmalloc(sizeof(fat32_directory));
     fs->root_dir->cluster = ebpb->root_cluster;
     fs->root_dir->sector = fat32_get_sector(fs, ebpb->root_cluster);
+    fs->fat_info = (fat32_info*)kmalloc(sizeof(fat32_info));
+    ata_read(ebpb->fsinfo_sector + pt_info.relative_sector, fs->fat_info, sizeof(fat32_info));
+
+    serial_printf("%x--------\n", fs->fat_info->lead_signature);
 
     fat32_populate_dir(fs, fs->root_dir);
 

@@ -104,10 +104,14 @@ typedef struct {
     fat32_directory* root_dir;
     u32 partition_sector;
     hashmap_table* cache_hashmap;
+    fat32_info* fat_info;
 } __attribute__((packed)) fat32_fs;
 
 fat32_fs* fat32_init(partition_info pt_info);
 fat32_fs* fat32_get_partition(u32 pt_num);
+
+int fat32_read(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* buffer);
+int fat32_write(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* buffer, u32 size, u16 attr);
 
 u32 fat32_get_sector(fat32_fs* fs, u32 cluster);
 u32 fat32_read_cluster_end(fat32_fs* fs, u32 cluster);

@@ -15,6 +15,8 @@
 #define IOAPIC_ARB    0x02
 #define IOAPIC_REDTBL 0x10
 
+extern bool ioapic_initialised;
+
 void ioapic_init();
 
 void ioapic_redirect_irq(u32 lapic_id, u8 vec, u8 irq, bool mask);

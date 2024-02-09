@@ -1,6 +1,8 @@
 #include <arch/acpi/ioapic.h>
 #include <arch/smp/smp.h>
 
+bool ioapic_initialised = false;
+
 void ioapic_write(madt_ioapic* ioapic, u8 reg, u32 val) {
     mmio_write32(HIGHER_HALF(ioapic->apic_addr) + IOAPIC_REGSEL, reg);
     mmio_write32(HIGHER_HALF(ioapic->apic_addr) + IOAPIC_IOWIN, val);
@@ -97,5 +99,7 @@ void ioapic_init() {
         ioapic_write(ioapic, IOAPIC_REDTBL+2*i, 0x00010000 | (32 + i));
         ioapic_write(ioapic, IOAPIC_REDTBL+2*i+1, 0); // redir cpu
     }
+
+    ioapic_initialised = true;
     // We disable all entries by default
 }
