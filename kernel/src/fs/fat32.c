@@ -81,8 +81,6 @@ fat32_fs* fat32_init(partition_info pt_info) {
     fs->fat_info = (fat32_info*)kmalloc(sizeof(fat32_info));
     ata_read(ebpb->fsinfo_sector + pt_info.relative_sector, fs->fat_info, sizeof(fat32_info));
 
-    serial_printf("%x--------\n", fs->fat_info->lead_signature);
-
     fat32_populate_dir(fs, fs->root_dir);
 
     fs->cache_hashmap = hashmap_init(256, sizeof(fat32_directory), 25);

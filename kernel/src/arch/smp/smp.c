@@ -34,6 +34,8 @@ void smp_init_cpu(struct limine_smp_info* smp_info) {
 
     cpu->proc_pr_count = 0;
 
+    cpu->current_pm = vmm_kernel_pm;
+
     smp_cpu_list[smp_info->lapic_id] = cpu;
 
     sched_init();
@@ -67,6 +69,7 @@ void smp_init() {
     cpu0->proc_pr_count = 0;
     cpu0->last_idle_time = 0;
     cpu0->total_time = 0;
+    cpu0->current_pm = vmm_kernel_pm;
     smp_cpu_list[0] = cpu0;
 
     log_info("%d CPUs detected.\n", count);

@@ -10,7 +10,6 @@
 
 typedef uptr page_map;
 
-extern page_map* vmm_current_pm;
 extern page_map* vmm_kernel_pm;
 
 extern symbol text_start_ld;

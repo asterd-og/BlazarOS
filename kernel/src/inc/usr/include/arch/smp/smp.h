@@ -23,12 +23,14 @@ extern u64 smp_cpu_count;
 typedef struct {
     bool lock;
     u32 lapic_id;
+
+    page_map* current_pm;
+
     process* current_proc;
     process* proc_list[256];
     u64 proc_size;
     u64 proc_idx;
     u64 proc_pr_count;
-
     u64 last_idle_time;
     u64 total_time;
 } __attribute__((packed)) cpu_info;

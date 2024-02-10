@@ -1,11 +1,11 @@
 #include <mm/vmm/vmm.h>
+#include <arch/smp/smp.h>
 
 volatile struct limine_kernel_address_request kernel_address_request = {
     .id = LIMINE_KERNEL_ADDRESS_REQUEST,
     .revision = 0,
 };
 
-page_map* vmm_current_pm;
 page_map* vmm_kernel_pm;
 
 uptr* vmm_get_next_level(uptr* level, uptr entry, u64 flags, bool alloc) {
@@ -36,7 +36,7 @@ page_map* vmm_new_pm() {
 }
 
 void vmm_destroy_pm(page_map* pm) {
-    if (vmm_current_pm == pm) {
+    if (this_cpu()->current_pm == pm) {
         vmm_switch_pm(vmm_kernel_pm);
     }
 
@@ -46,7 +46,8 @@ void vmm_destroy_pm(page_map* pm) {
 
 void vmm_switch_pm(page_map* pm) {
     write_cr3((u64)PHYSICAL(pm));
-    vmm_current_pm = pm;
+    cpu_info* cpu = this_cpu();
+    if (cpu != NULL) cpu->current_pm = pm;
 }
 
 void vmm_map(page_map* pm, uptr vaddr, uptr paddr, u64 flags) {

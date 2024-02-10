@@ -1,4 +1,5 @@
 #include <mm/heap/heap.h>
+#include <arch/smp/smp.h>
 
 void* kmalloc(size_t size) {
     // Everything allocated in higher half
@@ -32,7 +33,7 @@ void kfree(void* ptr) {
 void* malloc(size_t size) {
     // This one is for the current pagemap instead of shared
     u64 pages = ALIGN_UP(size + sizeof(heap_memory_block), PAGE_SIZE) / PAGE_SIZE;
-    void* ptr = HIGHER_HALF(vmm_alloc(vmm_current_pm, pages));
+    void* ptr = HIGHER_HALF(vmm_alloc(this_cpu()->current_pm, pages));
     heap_memory_block* memory_block = (heap_memory_block*)ptr;
     memory_block->magic = HEAP_MAGIC;
     memory_block->pages = pages;
@@ -54,5 +55,5 @@ void free(void* ptr) {
     void* obj = (ptr - sizeof(heap_memory_block));
     heap_memory_block* memory_block = (heap_memory_block*)obj;
     memset(obj, 0, memory_block->pages * PAGE_SIZE);
-    vmm_free(vmm_current_pm, PHYSICAL(obj), memory_block->pages);
+    vmm_free(this_cpu()->current_pm, PHYSICAL(obj), memory_block->pages);
 }
