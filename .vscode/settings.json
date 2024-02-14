@@ -35,7 +35,11 @@
         "ssfn.h": "c",
         "framebuffer.h": "c",
         "tga.h": "c",
-        "atomic.h": "c"
+        "atomic.h": "c",
+        "button.h": "c",
+        "window.h": "c",
+        "wm.h": "c",
+        "mouse.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

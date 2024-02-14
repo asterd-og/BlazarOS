@@ -18,10 +18,6 @@ void vbe_init(struct limine_framebuffer* fb) {
     vbe_buffer = (u32*)kmalloc(vbe_size);
     vbe = fb_create(vbe_buffer, fb->width, fb->height, fb->pitch);
 
-    u8* font_buffer = kmalloc(blazfs_ftell("FreeSans.sfn"));
-    blazfs_read("FreeSans.sfn", font_buffer);
-    fb_set_font(vbe, SSFN_FAMILY_ANY, 16, font_buffer);
-
     fb_clear(vbe, 0xFFFFFFFF);
 }
 

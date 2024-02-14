@@ -1,41 +1,79 @@
-#define SSFN_IMPLEMENTATION
 #include <video/framebuffer.h>
 #include <mm/heap/heap.h>
 
-void fb_set_font(framebuffer_info* fb, int family, int size, u8* font) {
-    fb->ssfn_buf.ptr = fb->buffer;
-    fb->ssfn_buf.w = fb->width;
-    fb->ssfn_buf.h = fb->height;
-    fb->ssfn_buf.p = fb->pitch;
-    fb->ssfn_buf.x = 0;
-    fb->ssfn_buf.y = 0;
-    fb->ssfn_buf.fg = 0xFFFFFFFF;
-    ssfn_load(&fb->ssfn_ctx, font);
-    int ret = ssfn_select(&fb->ssfn_ctx, family, NULL, SSFN_STYLE_REGULAR, size);
-    if (ret != SSFN_OK) {
-        serial_printf("%s\n", ssfn_error(ret));
+void fb_draw_char(framebuffer_info* fb, u32 x, u32 y, u32 color, char c, font_info font) {
+    if (c == 0) return;
+
+    u32 p = font.height * c;
+    
+    for (u32 xx = 0; xx < font.width; xx++) {
+        for (u32 yy = 0; yy < font.height; yy++) {
+            if (bit_address_from_byte(font.data[p + yy], xx + 1))
+                fb_set_pixel(fb, x + (font.width - xx), y + yy, color);
+        }
     }
 }
 
-void fb_draw_str(framebuffer_info* fb, u32 x, u32 y, u32 color, char* str) {
-    fb->ssfn_buf.x = x;
-    fb->ssfn_buf.y = y;
-    fb->ssfn_buf.fg = color;
-    char* s = str;
-    int ret = 0;
-    while((ret = ssfn_render(&fb->ssfn_ctx, &fb->ssfn_buf, s)) > 0) s += ret;
+void fb_draw_str(framebuffer_info* fb, u32 x, u32 y, u32 color, char* c, font_info font) {
+    while (*c) {
+        fb_draw_char(fb, x, y, color, *c, font);
+        c++;
+        x += font.width;
+    }
 }
 
 void fb_set_pixel(framebuffer_info* fb, u32 x, u32 y, u32 color) {
+    if (x > fb->width || x < 0 || y > fb->height || y < 0) return;
     fb->buffer[y * fb->pitch / 4 + x] = color;
 }
 
-void fb_draw_tga(framebuffer_info* fb, u32 _x, u32 _y, u32* tga) {
-    u32 w = tga[0];
-    u32 h = tga[1];
-    for (u32 y = 0; y < h; y++) {
-        for (u32 x = 0; x < w; x++) {
-            fb_set_pixel(fb, x + _x, y + _y, tga[2 + (x + (y * w))]);
+u32 fb_get_pixel(framebuffer_info* fb, u32 x, u32 y) {
+    return fb->buffer[y * fb->pitch / 4 + x];
+}
+
+void fb_draw_rectangle(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 color) {
+    for (u32 xx = x; xx < w + x; xx++) {
+        for (u32 yy = y; yy < y + h; yy++) {
+            fb->buffer[yy * fb->pitch / 4 + xx] = color;
+        }
+    }
+}
+
+void fb_draw_outline(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 color) {
+    for (u32 xx = x; xx < w + x; xx++) {
+        fb->buffer[y * fb->pitch / 4 + xx] = color;
+    }
+
+    for (u32 yy = y; yy < y + h; yy++) {
+        fb->buffer[yy * fb->pitch / 4 + (x + w)] = color;
+        fb->buffer[yy * fb->pitch / 4 + x] = color;
+    }
+
+    for (u32 xx = x; xx < w + x + 1; xx++) {
+        fb->buffer[(y + h) * fb->pitch / 4 + xx] = color;
+    }
+}
+
+void fb_draw_tga(framebuffer_info* fb, u32 x, u32 y, tga_info* tga) {
+    for (u32 yy = 0; yy < tga->height; yy++) {
+        for (u32 xx = 0; xx < tga->width; xx++) {
+            fb_set_pixel(fb, xx + x, yy + y, tga->data[xx + (yy * tga->width)]);
+        }
+    }
+}
+
+void fb_draw_buffer(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32* buf) {
+    for (u32 yy = 0; yy < h; yy++) {
+        for (u32 xx = 0; xx < w; xx++) {
+            fb_set_pixel(fb, xx + x, yy + y, buf[xx + (yy * w)]);
+        }
+    }
+}
+
+void fb_blit_fb(framebuffer_info* to, framebuffer_info* from, u32 x, u32 y) {
+    for (u32 xx = 0; xx < from->width; xx++) {
+        for (u32 yy = 0; yy < from->height; yy++) {
+            fb_set_pixel(to, xx + x, yy + y, fb_get_pixel(from, xx, yy));
         }
     }
 }
@@ -51,9 +89,6 @@ framebuffer_info* fb_create(u32* buffer, u32 width, u32 height, u32 pitch) {
     fb->width = width;
     fb->height = height;
     fb->pitch = pitch;
-
-    memset(&fb->ssfn_ctx, 0, sizeof(ssfn_t));
-    memset(&fb->ssfn_buf, 0, sizeof(ssfn_buf_t));
 
     return fb;
 }

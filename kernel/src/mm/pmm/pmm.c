@@ -7,7 +7,7 @@ struct limine_memmap_request memmap_request = {
 
 u8* pmm_bitmap;
 u64 pmm_bitmap_size;
-u64 pmm_bitmap_index;
+u64 pmm_bitmap_index = 0;
 
 u64 pmm_pages;
 u64 pmm_free_memory;
@@ -68,7 +68,6 @@ void pmm_init() {
         memmap_entry = memmap_response->entries[entry];
         if (memmap_entry->type != LIMINE_MEMMAP_USABLE)
             continue;
-        
         top_address = memmap_entry->base + memmap_entry->length;
         if (top_address > higher_address)
             higher_address = top_address;

@@ -47,6 +47,13 @@
 #include <video/libs/tga.h>
 #include <video/vbe.h>
 
+#include <desktop/wm.h>
+#include <desktop/window.h>
+
+#include <desktop/elements/button.h>
+
+#include <desktop/theme/theme_man.h>
+
 // Set the base revision to 1, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
 // See specification for further info.
@@ -98,9 +105,12 @@ void* get_mod_addr(int pos) {
 }
 
 void vbe_task() {
+    theme_get_button();
+
     while (1) {
-        fb_clear(vbe, 0xFFFFFFFF);
-        fb_draw_str(vbe, 25, 25, 0xFF000000, "An objection in motion don't ask where I'm going cuz where I'm going is right where I am");
+        fb_clear(vbe, 0xFF880088);
+        theme_render_button();
+        wm_update();
         vbe_swap();
     }
 }
@@ -176,6 +186,8 @@ void _start(void) {
     keyboard_init();
 
     vbe_init(framebuffer);
+
+    wm_init();
 
     hpet_init();
     sched_init();

@@ -28,6 +28,10 @@ int main(int argc, char** argv) {
         strcpy(files[i].name, argv[i + 1]);
 
         fp = fopen(argv[i + 1], "r");
+        if (fp ==NULL) {
+            printf("Couldn't open file '%s'\n", argv[i + 1]);
+            return 1;
+        }
         fseek(fp, 0L, SEEK_END);
 
         files[i].size = ftell(fp);
