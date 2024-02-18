@@ -48,6 +48,6 @@ typedef struct {
 
 extern theme_info* theme_global;
 
-void theme_init();
+void theme_init(char* theme);
 
 void theme_crop_rect_into(u32 x, u32 y, u32 w, u32 h, u32 to_w, u32* from, u32* to);

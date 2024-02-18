@@ -105,16 +105,16 @@ void* get_mod_addr(int pos) {
 }
 
 void vbe_task() {
-    theme_init();
+    theme_init("theme.tga");
     btn_init();
     window_init();
 
-    window_info* win = window_create(50, 50, 250, 250, "Terminal");
+    window_info* win = window_create(190, 150, 450, 250, "Terminal");
 
-    element_info* btn = btn_create(25, 25, 50, 0, "Hello world!", NULL);
+    element_info* btn = btn_create(25, 25, 50, 0, "Buttons!!", NULL);
 
     while (1) {
-        fb_clear(vbe, 0xFF880088);
+        fb_clear(vbe, 0xFFFF00FF);
         btn_draw(btn);
         window_draw_decorations(win);
         wm_update();

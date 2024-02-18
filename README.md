@@ -45,5 +45,5 @@ BlazarOS is a hobby operating system built for the x86_64 architecture. Here are
 
 # Screenshots
 ![sc1](https://github.com/asterd-og/BlazarOS/blob/master/images/sc1.png?raw=true)
-![sc2](https://github.com/asterd-og/BlazarOS/blob/master/images/sc2.png?raw=true)
-![sc3](https://github.com/asterd-og/BlazarOS/blob/master/images/sc3.png?raw=true)
+![theme_orang](https://github.com/asterd-og/BlazarOS/blob/master/images/theme_orang.png?raw=true)
+![theme_blue](https://github.com/asterd-og/BlazarOS/blob/master/images/theme_blue.png?raw=true)

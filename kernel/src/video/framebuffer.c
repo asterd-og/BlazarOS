@@ -97,7 +97,7 @@ void fb_blit_fb(framebuffer_info* to, framebuffer_info* from, u32 x, u32 y) {
 }
 
 void fb_clear(framebuffer_info* fb, u32 color) {
-    memset(fb->buffer, color, fb->width * fb->height * 4);
+    for (int i = 0; i < fb->width * fb->height; i++) fb->buffer[i] = color;
 }
 
 framebuffer_info* fb_create(u32* buffer, u32 width, u32 height, u32 pitch) {

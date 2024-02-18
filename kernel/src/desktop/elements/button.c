@@ -7,6 +7,10 @@ u32* btn_ls;
 u32* btn_ms;
 u32* btn_rs;
 
+u32* btn_pressed_ls;
+u32* btn_pressed_ms;
+u32* btn_pressed_rs;
+
 void btn_draw(element_info* btn) {
     theme_button_info* inf = &theme_global->button_info;
     button_info* btn_info = (button_info*)btn->data;
@@ -55,7 +59,15 @@ void btn_init() {
     btn_ms = (u32*)kmalloc(btn.ms_width * btn.ms_width * 4);
     btn_rs = (u32*)kmalloc(btn.rs_width * btn.rs_width * 4);
 
+    btn_pressed_ls = (u32*)kmalloc(btn.ls_width * btn.ls_height * 4);
+    btn_pressed_ms = (u32*)kmalloc(btn.ms_width * btn.ms_width * 4);
+    btn_pressed_rs = (u32*)kmalloc(btn.rs_width * btn.rs_width * 4);
+
     theme_crop_rect_into(0, 0, btn.ls_width, btn.ls_height, tga->width, tga->data, btn_ls);
     theme_crop_rect_into(btn.ls_width + 2, 0, btn.ms_width, btn.ms_height, tga->width, tga->data, btn_ms);
     theme_crop_rect_into((btn.ls_width + 2) + btn.ms_width + 2, 0, btn.rs_width, btn.rs_height, tga->width, tga->data, btn_rs);
+
+    theme_crop_rect_into(0, btn.ls_height + 1, btn.ls_width, btn.ls_height, tga->width, tga->data, btn_pressed_ls);
+    theme_crop_rect_into(btn.ls_width + 2, btn.ms_height + 1, btn.ms_width, btn.ms_height, tga->width, tga->data, btn_pressed_ms);
+    theme_crop_rect_into((btn.ls_width + 2) + btn.ms_width + 2, btn.rs_height + 1, btn.rs_width, btn.rs_height, tga->width, tga->data, btn_pressed_rs);
 }

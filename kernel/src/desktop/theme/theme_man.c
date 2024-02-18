@@ -15,11 +15,11 @@ void theme_crop_rect_into(u32 x, u32 y, u32 w, u32 h, u32 to_w, u32* from, u32* 
     }
 }
 
-void theme_init() {
-    u32 size = blazfs_ftell("theme.tga");
+void theme_init(char* theme_dir) {
+    u32 size = blazfs_ftell(theme_dir);
 
     u8* theme_buf = (u8*)kmalloc(size);
-    blazfs_read("theme.tga", theme_buf);
+    blazfs_read(theme_dir, theme_buf);
 
     theme_tga = tga_parse(theme_buf, size);
 

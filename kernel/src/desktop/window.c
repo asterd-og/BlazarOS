@@ -33,6 +33,8 @@ void window_draw_decorations(window_info* win) {
     }
 
     fb_draw_str(vbe, win->rect.x + inf->bar_ls_width, (win->rect.y - inf->bar_ls_height) + 2, 0xFF000000, win->title, kernel_font);
+
+    fb_draw_rectangle(vbe, win->rect.x, win->rect.y, win->rect.width, win->rect.height, 0xFF000000);
 }
 
 void window_add_element(window_info* win, element_info* element) {
