@@ -40,6 +40,7 @@ typedef struct {
     framebuffer_info* fb;
     
     char* title;
+    int title_len;
 
     bool dirty;
 

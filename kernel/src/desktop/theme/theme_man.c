@@ -5,10 +5,7 @@
 #include <desktop/rect.h>
 
 tga_info* theme_tga;
-
-u32* btn_part1;
-u32* btn_part2;
-u32* btn_part3;
+theme_info* theme_global;
 
 void theme_crop_rect_into(u32 x, u32 y, u32 w, u32 h, u32 to_w, u32* from, u32* to) {
     for (u32 xx = 0; xx < w; xx++) {
@@ -18,7 +15,7 @@ void theme_crop_rect_into(u32 x, u32 y, u32 w, u32 h, u32 to_w, u32* from, u32* 
     }
 }
 
-void theme_get_button() {
+void theme_init() {
     u32 size = blazfs_ftell("theme.tga");
 
     u8* theme_buf = (u8*)kmalloc(size);
@@ -26,25 +23,54 @@ void theme_get_button() {
 
     theme_tga = tga_parse(theme_buf, size);
 
-    btn_part1 = (u32*)kmalloc(5 * 17 * 4);
-    btn_part2 = (u32*)kmalloc(9 * 17 * 4);
-    btn_part3 = (u32*)kmalloc(5 * 17 * 4);
+    theme_global = (theme_info*)kmalloc(sizeof(theme_info));
 
-    theme_crop_rect_into(0, 0, 5, 17, theme_tga->width, theme_tga->data, btn_part1);
-    theme_crop_rect_into(6, 0, 9, 17, theme_tga->width, theme_tga->data, btn_part2);
-    theme_crop_rect_into(6 + 9 + 1, 0, 5, 17, theme_tga->width, theme_tga->data, btn_part3);
+    theme_global->image = theme_tga;
+
+    // Button
+    // Idea: Begin parsing .ini files to get elements dimensions, etc.
+    theme_global->button_info.start_x = 0;
+    theme_global->button_info.start_y = 0;
+
+    theme_global->button_info.ls_width = 4;
+    theme_global->button_info.ls_height = 17;
+
+    theme_global->button_info.ms_width = 8;
+    theme_global->button_info.ms_height = 17;
+
+    theme_global->button_info.rs_width = 4;
+    theme_global->button_info.rs_height = 17;
+
+    // Window
+    theme_global->window_info.start_x = 20;
+    theme_global->window_info.start_y = 0;
+
+    theme_global->window_info.bar_ls_width = 5;
+    theme_global->window_info.bar_ls_height = 17;
+
+    theme_global->window_info.bar_ms_width = 1;
+    theme_global->window_info.bar_ms_height = 17;
+    
+    theme_global->window_info.bar_rs_width = 5;
+    theme_global->window_info.bar_rs_height = 17;
+
+
+    theme_global->window_info.ls_width = 5;
+    theme_global->window_info.ls_height = 1;
+
+    theme_global->window_info.rs_width = 4;
+    theme_global->window_info.rs_height = 1;
+
+
+    theme_global->window_info.bottom_ls_height = 4;
+    theme_global->window_info.bottom_ls_width = 5;
+
+    theme_global->window_info.bottom_ms_height = 4;
+    theme_global->window_info.bottom_ms_width = 1;
+
+    theme_global->window_info.bottom_rs_height = 4;
+    theme_global->window_info.bottom_rs_width = 4;
 }
 
-void theme_render_button() {
-    fb_draw_buffer(vbe, 0, 0, 5, 17, btn_part1);
-    fb_draw_buffer(vbe, 4, 0, 9, 17, btn_part2);
-    fb_draw_buffer(vbe, 4 + 9, 0, 9, 17, btn_part2);
-    fb_draw_buffer(vbe, 4 + 18, 0, 9, 17, btn_part2);
-    fb_draw_buffer(vbe, 4 + 27, 0, 9, 17, btn_part2);
-    fb_draw_buffer(vbe, 4 + 36, 0, 9, 17, btn_part2);
-    fb_draw_buffer(vbe, 4 + 45, 0, 9, 17, btn_part2);
-    fb_draw_buffer(vbe, 4 + 54, 0, 9, 17, btn_part2);
-    fb_draw_buffer(vbe, 4 + 54 + 9, 0, 5, 17, btn_part3);
-
-    fb_draw_str(vbe, 4, 2, 0xFF000000, "Buttons!", kernel_font);
+void theme_test() {
 }

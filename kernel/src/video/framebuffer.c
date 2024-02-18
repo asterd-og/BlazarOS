@@ -28,7 +28,7 @@ void fb_set_pixel(framebuffer_info* fb, u32 x, u32 y, u32 color) {
 }
 
 u32 fb_get_pixel(framebuffer_info* fb, u32 x, u32 y) {
-    return fb->buffer[y * fb->pitch / 4 + x];
+    return fb->buffer[y * fb->width + x];
 }
 
 void fb_draw_rectangle(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 color) {
@@ -62,10 +62,28 @@ void fb_draw_tga(framebuffer_info* fb, u32 x, u32 y, tga_info* tga) {
     }
 }
 
+void fb_draw_fake_alpha_tga(framebuffer_info* fb, u32 x, u32 y, u32 alpha, tga_info* tga) {
+    for (u32 yy = 0; yy < tga->height; yy++) {
+        for (u32 xx = 0; xx < tga->width; xx++) {
+            u32 pixel = tga->data[xx + (yy * tga->width)];
+            if (pixel != alpha) fb_set_pixel(fb, xx + x, yy + y, pixel);
+        }
+    }
+}
+
 void fb_draw_buffer(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32* buf) {
     for (u32 yy = 0; yy < h; yy++) {
         for (u32 xx = 0; xx < w; xx++) {
             fb_set_pixel(fb, xx + x, yy + y, buf[xx + (yy * w)]);
+        }
+    }
+}
+
+void fb_draw_fake_alpha_buffer(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 alpha, u32* buf) {
+    for (u32 yy = 0; yy < h; yy++) {
+        for (u32 xx = 0; xx < w; xx++) {
+            u32 pixel = buf[xx + (yy * w)];
+            if (pixel != alpha) fb_set_pixel(fb, xx + x, yy + y, pixel);
         }
     }
 }

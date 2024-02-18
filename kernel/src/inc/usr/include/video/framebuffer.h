@@ -24,8 +24,10 @@ void fb_draw_rectangle(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 col
 void fb_draw_outline(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 color);
 
 void fb_draw_tga(framebuffer_info* fb, u32 x, u32 y, tga_info* tga);
+void fb_draw_fake_alpha_tga(framebuffer_info* fb, u32 x, u32 y, u32 alpha_color, tga_info* tga);
 
 void fb_draw_buffer(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32* buf);
+void fb_draw_fake_alpha_buffer(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 alpha, u32* buf);
 
 void fb_blit_fb(framebuffer_info* to, framebuffer_info* from, u32 x, u32 y);
 

@@ -6,8 +6,11 @@
 
 typedef struct {
     char* text;
+    int text_len;
     bool pressed;
 } button_info;
+
+void btn_init();
 
 element_info* btn_create(u32 x, u32 y, u32 w, u32 h, char* text, window_info* win);
 

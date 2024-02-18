@@ -105,11 +105,18 @@ void* get_mod_addr(int pos) {
 }
 
 void vbe_task() {
-    theme_get_button();
+    theme_init();
+    btn_init();
+    window_init();
+
+    window_info* win = window_create(50, 50, 250, 250, "Terminal");
+
+    element_info* btn = btn_create(25, 25, 50, 0, "Hello world!", NULL);
 
     while (1) {
         fb_clear(vbe, 0xFF880088);
-        theme_render_button();
+        btn_draw(btn);
+        window_draw_decorations(win);
         wm_update();
         vbe_swap();
     }
@@ -191,7 +198,7 @@ void _start(void) {
 
     hpet_init();
     sched_init();
-    sched_new_proc(vbe_task, 1, PROC_PR_HIGH);
+    sched_new_proc(vbe_task, 0, PROC_PR_HIGH);
     irq_register(SCHED_INT_VEC - 32, sched_switch);
 
     // We're done, just hang...

@@ -59,6 +59,10 @@ void irq_register(u8 vec, void* handler) {
     irq_handlers[vec] = handler;
 }
 
+void irq_unregister(u8 vec) {
+    irq_handlers[vec] = NULL;
+}
+
 void isr_handler(registers* regs) {
     if (regs->int_no == 0x80) {
         syscall_handler(regs);
@@ -69,6 +73,8 @@ void isr_handler(registers* regs) {
         panic("Spurious interrupt!\n");
         for (;;) __asm__ volatile("hlt");
     }
+
+    irq_unregister(0);
 
     __asm__ volatile("cli");
 
