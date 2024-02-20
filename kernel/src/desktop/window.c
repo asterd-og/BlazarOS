@@ -34,7 +34,7 @@ void window_draw_decorations(window_info* win) {
 
     fb_draw_str(vbe, win->rect.x + inf->bar_ls_width, (win->rect.y - inf->bar_ls_height) + 2, 0xFF000000, win->title, kernel_font);
 
-    fb_draw_rectangle(vbe, win->rect.x, win->rect.y, win->rect.width, win->rect.height, 0xFF000000);
+    fb_blit_fb(vbe, win->fb, win->rect.x, win->rect.y);
 }
 
 void window_add_element(window_info* win, element_info* element) {
@@ -53,14 +53,14 @@ window_info* window_create(u32 x, u32 y, u32 width, u32 height, char* name) {
     win->rect.height = height;
 
     win->buffer = (u32*)kmalloc(width * height * 4);
-    win->pitch = vbe->pitch;
+    win->pitch = width * 4;
 
     win->elements = (element_info**)kmalloc(sizeof(element_info) * 256);
     memset(win->elements, 0, sizeof(element_info) * 256);
     win->element_count = 0;
 
     win->fb = fb_create(win->buffer, width, height, win->pitch);
-    fb_clear(win->fb, 0xff808080);
+    fb_clear(win->fb, 0xff800080);
 
     return win;
 }

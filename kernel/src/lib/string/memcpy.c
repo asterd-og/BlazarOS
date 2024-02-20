@@ -1,13 +1,14 @@
 #include <lib/string/string.h>
 #include <types.h>
 
-void *memcpy(void *dest, const void *src, size_t n) {
-    u8 *pdest = (u8 *)dest;
-    const u8 *psrc = (const u8 *)src;
-
-    for (size_t i = 0; i < n; i++) {
-        pdest[i] = psrc[i];
-    }
-
-    return dest;
+void *memcpy(void *d, const void *s, size_t n) {
+    __asm__ volatile ("rep movsb"
+                  : "=D" (d),
+                    "=S" (s),
+                    "=c" (n)
+                  : "0" (d),
+                    "1" (s),
+                    "2" (n)
+                  : "memory");
+    return d;
 }

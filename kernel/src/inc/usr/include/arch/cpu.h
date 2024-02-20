@@ -18,3 +18,5 @@ inline void get_cpuid(u32 reg, u32 *eax, u32 *ebx, u32 *ecx, u32 *edx) {
         : "=a" (*eax), "=b" (*ebx), "=c" (*ecx), "=d" (*edx)
         : "0" (reg));
 }
+
+void sse_init();

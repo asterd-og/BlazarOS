@@ -20,6 +20,16 @@
 #define PTE_GET_ADDR(VALUE) ((VALUE) & PTE_ADDR_MASK)
 #define PTE_GET_FLAGS(VALUE) ((VALUE) & ~PTE_ADDR_MASK)
 
+inline void write_cr4(u64 val) {
+    __asm__ ("mov %0, %%cr4" : : "r"(val) : "memory");
+}
+
+inline u64 read_cr4() {
+    u64 val;
+    __asm__ ("mov %%cr4, %0" : "=r"(val) : : "memory");
+    return val;
+}
+
 inline void write_cr3(u64 val) {
     __asm__ ("mov %0, %%cr3" : : "r"(val) : "memory");
 }
@@ -27,6 +37,22 @@ inline void write_cr3(u64 val) {
 inline u64 read_cr3() {
     u64 val;
     __asm__ ("mov %%cr3, %0" : "=r"(val) : : "memory");
+    return val;
+}
+
+inline void write_cr0(u64 val) {
+    __asm__ ("mov %0, %%cr0" : : "r"(val) : "memory");
+}
+
+inline u64 read_cr0() {
+    u64 val;
+    __asm__ ("mov %%cr0, %0" : "=r"(val) : : "memory");
+    return val;
+}
+
+inline u64 read_cr2() {
+    u64 val;
+    __asm__ ("mov %%cr2, %0" : "=r"(val) : : "memory");
     return val;
 }
 

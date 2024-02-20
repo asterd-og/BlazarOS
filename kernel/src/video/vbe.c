@@ -22,7 +22,5 @@ void vbe_init(struct limine_framebuffer* fb) {
 }
 
 void vbe_swap() {
-    lock(&vbe_lock);
     memcpy(lfb_buffer, vbe_buffer, vbe_size);
-    unlock(&vbe_lock);
 }

@@ -5,12 +5,14 @@ struct limine_memmap_request memmap_request = {
     .revision = 0
 };
 
-u8* pmm_bitmap;
-u64 pmm_bitmap_size;
+u8* pmm_bitmap = NULL;
+u64 pmm_bitmap_size = 0;
 u64 pmm_bitmap_index = 0;
 
-u64 pmm_pages;
-u64 pmm_free_memory;
+u64 pmm_pages = 0;
+u64 pmm_total_memory = 0;
+u64 pmm_free_memory = 0;
+u64 pmm_used_memory = 0;
 
 void* pmm_alloc(u64 pages) {
     u64 pages_free = 0;
@@ -35,6 +37,9 @@ void* pmm_alloc(u64 pages) {
         }
     }
 
+    pmm_free_memory -= pages * PAGE_SIZE;
+    pmm_used_memory += pages * PAGE_SIZE;
+
     for (u64 i = 0; i < pages; i++) {
         bitmap_set(pmm_bitmap, (pmm_bitmap_index - pages) + i);
     }
@@ -45,6 +50,8 @@ void* pmm_alloc(u64 pages) {
 void pmm_free(void* ptr, u64 pages) {
     u64 page_index = (u64)ptr;
     page_index /= PAGE_SIZE;
+    pmm_free_memory += pages * PAGE_SIZE;
+    pmm_used_memory -= pages * PAGE_SIZE;
 
     for (u64 i = 0; i < pages; i++) {
         bitmap_clear(pmm_bitmap, page_index + i);
@@ -66,6 +73,7 @@ void pmm_init() {
 
     for (u64 entry = 0; entry < memmap_response->entry_count; entry++) {
         memmap_entry = memmap_response->entries[entry];
+        pmm_total_memory += memmap_entry->length;
         if (memmap_entry->type != LIMINE_MEMMAP_USABLE)
             continue;
         top_address = memmap_entry->base + memmap_entry->length;
@@ -94,8 +102,10 @@ void pmm_init() {
 
     for (u64 entry = 0; entry < memmap_response->entry_count; entry++) {
         memmap_entry = memmap_response->entries[entry];
-        if (memmap_entry->type != LIMINE_MEMMAP_USABLE)
+        if (memmap_entry->type != LIMINE_MEMMAP_USABLE) {
+            pmm_used_memory += memmap_entry->length;
             continue;
+        }
         
         for (u64 i = 0; i < memmap_entry->length; i += PAGE_SIZE) {
             bitmap_clear(pmm_bitmap, (memmap_entry->base + i) / PAGE_SIZE);

@@ -19,6 +19,8 @@
 
 #include <dev/storage/ata.h>
 
+#include <arch/cpu.h>
+
 #include <arch/gdt/gdt.h>
 #include <arch/idt/idt.h>
 
@@ -108,10 +110,12 @@ void vbe_task() {
     theme_init("theme.tga");
     btn_init();
     window_init();
+    int frame_counter = 0;
+    int second_counter = rtc_get(RTC_SECOND);
 
     window_info* win = window_create(190, 150, 450, 250, "Terminal");
-
-    element_info* btn = btn_create(25, 25, 50, 0, "Buttons!!", NULL);
+    
+    element_info* btn = btn_create(25, 25, 50, 0, "Buttons!!", win);
 
     while (1) {
         fb_clear(vbe, 0xFFFF00FF);
@@ -119,6 +123,12 @@ void vbe_task() {
         window_draw_decorations(win);
         wm_update();
         vbe_swap();
+        frame_counter++;
+        if (second_counter != rtc_get(RTC_SECOND)) {
+            second_counter = rtc_get(RTC_SECOND);
+            serial_printf("FPS = %d\n", frame_counter);
+            frame_counter = 0;
+        }
     }
 }
 
@@ -140,12 +150,15 @@ void _start(void) {
     hhdm_offset = hhdm_request.response->offset;
 
     framebuffer = framebuffer_request.response->framebuffers[0];
+    
+    sse_init();
+    serial_printf("SSE Initialised.\n");
 
     ft_ctx = flanterm_fb_simple_init(
         framebuffer->address, framebuffer->width,
         framebuffer->height, framebuffer->pitch
     );
-
+    
     serial_init();
     serial_printf("Serial Initialised.\n");
 

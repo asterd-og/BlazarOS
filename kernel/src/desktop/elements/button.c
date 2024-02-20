@@ -14,15 +14,16 @@ u32* btn_pressed_rs;
 void btn_draw(element_info* btn) {
     theme_button_info* inf = &theme_global->button_info;
     button_info* btn_info = (button_info*)btn->data;
+    framebuffer_info* fb = btn->parent->fb;
 
-    fb_draw_fake_alpha_buffer(vbe, btn->rect.x, btn->rect.y, inf->ls_width, inf->ls_height, 0xFF00FF00, btn_ls);
+    fb_draw_fake_alpha_buffer(fb, btn->rect.x, btn->rect.y, inf->ls_width, inf->ls_height, 0xFF00FF00, btn_ls);
     
     for (int i = 0; i < btn_info->text_len; i++)
-        fb_draw_buffer(vbe, (btn->rect.x + (inf->ls_width + (inf->ms_width * i))), btn->rect.y, inf->ms_width, inf->ms_height, btn_ms);
+        fb_draw_buffer(fb, (btn->rect.x + (inf->ls_width + (inf->ms_width * i))), btn->rect.y, inf->ms_width, inf->ms_height, btn_ms);
     
-    fb_draw_fake_alpha_buffer(vbe, (btn->rect.x + (inf->ls_width + (inf->ms_width * (btn_info->text_len - 1)))) + inf->ms_width, btn->rect.y, inf->rs_width, inf->rs_height, 0xFF00FF00, btn_rs);
+    fb_draw_fake_alpha_buffer(fb, (btn->rect.x + (inf->ls_width + (inf->ms_width * (btn_info->text_len - 1)))) + inf->ms_width, btn->rect.y, inf->rs_width, inf->rs_height, 0xFF00FF00, btn_rs);
 
-    fb_draw_str(vbe, btn->rect.x + inf->ls_width, btn->rect.y + 2, 0xFF000000, btn_info->text, kernel_font);
+    fb_draw_str(fb, btn->rect.x + inf->ls_width, btn->rect.y + 2, 0xFF000000, btn_info->text, kernel_font);
 }
 
 void btn_update(element_info* btn) {

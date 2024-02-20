@@ -7,7 +7,7 @@
 /*
 WM IDEA:
 
-window_info* win = window_create(x, y, w, h, name);
+window_info* win = wm_create_window(x, y, w, h, name);
 event_info* event = wm_create_event(win);
 
 element_info* button = wm_create_element(WM_BUTTON, x, y, w, h, contents);
@@ -69,7 +69,7 @@ typedef struct {
 
 void wm_init();
 
-void wm_add_window(window_info* window);
+window_info* wm_create_window(int x, int y, int width, int height, char* title);
 
 void wm_update();
 void wm_draw();

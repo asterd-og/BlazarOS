@@ -28,7 +28,7 @@ void fb_set_pixel(framebuffer_info* fb, u32 x, u32 y, u32 color) {
 }
 
 u32 fb_get_pixel(framebuffer_info* fb, u32 x, u32 y) {
-    return fb->buffer[y * fb->width + x];
+    return fb->buffer[y * fb->pitch / 4 + x];
 }
 
 void fb_draw_rectangle(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 color) {
