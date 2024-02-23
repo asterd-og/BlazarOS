@@ -114,6 +114,7 @@ void vbe_task() {
     int second_counter = rtc_get(RTC_SECOND);
 
     window_info* win = wm_create_window(190, 150, 450, 250, "Terminal");
+    window_info* win2 = wm_create_window(190, 150, 450, 250, "Terminal");
     
     element_info* btn = btn_create(25, 25, 50, 0, "Buttons!!", win);
 

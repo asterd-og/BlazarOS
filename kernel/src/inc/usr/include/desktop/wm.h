@@ -74,6 +74,6 @@ window_info* wm_create_window(int x, int y, int width, int height, char* title);
 void wm_update();
 void wm_draw();
 
-framebuffer_info* wm_fb;
+extern framebuffer_info* wm_fb;
 extern rectangle wm_mouse_rect;
 extern wm_theme_info* wm_theme;
