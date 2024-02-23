@@ -1,7 +1,7 @@
 #include <dev/ps2/mouse.h>
 
 u8 mouse_state = 0;
-u8 mouse_bytes[3];
+u8 mouse_bytes[3] = {0, 0, 0};
 
 u32 mouse_x = 0;
 u32 mouse_y = 0;
@@ -9,8 +9,10 @@ u32 mouse_y = 0;
 i32 mouse_wrap_x = 0;
 i32 mouse_wrap_y = 0;
 
-bool mouse_left_pressed;
-bool mouse_right_pressed;
+bool mouse_left_pressed = false;
+bool mouse_right_pressed = false;
+
+bool mouse_moved = false;
 
 void mouse_wait_write() {
     while ((inb(0x64) & 2) != 0) {;}
@@ -75,6 +77,7 @@ void mouse_handler(registers* regs) {
             mouse_right_pressed = (bool)((mouse_bytes[0] & 0b00000010) >> 1);
 
             mouse_state = 0;
+            mouse_moved = true;
             break;
     }
 }

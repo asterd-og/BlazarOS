@@ -16,25 +16,23 @@ u32* win_bottom_rs;
 void window_draw_decorations(window_info* win) {
     theme_window_info* inf = &theme_global->window_info;
 
-    fb_draw_fake_alpha_buffer(vbe, (win->rect.x - inf->bar_ls_width), win->rect.y - inf->bar_ls_height, inf->bar_ls_width, inf->bar_ls_height, 0xFF00FF00, win_bar_ls);
-    fb_draw_fake_alpha_buffer(vbe, ((win->rect.x - inf->bar_ls_width) + (inf->bar_ls_width + win->rect.width)), win->rect.y - inf->bar_ls_height, inf->bar_rs_width, inf->bar_rs_height, 0xFF00FF00, win_bar_rs);
+    fb_draw_fake_alpha_buffer(wm_fb, (win->rect.x - inf->bar_ls_width), win->rect.y - inf->bar_ls_height, inf->bar_ls_width, inf->bar_ls_height, 0xFF00FF00, win_bar_ls);
+    fb_draw_fake_alpha_buffer(wm_fb, ((win->rect.x - inf->bar_ls_width) + (inf->bar_ls_width + win->rect.width)), win->rect.y - inf->bar_ls_height, inf->bar_rs_width, inf->bar_rs_height, 0xFF00FF00, win_bar_rs);
     
-    fb_draw_buffer(vbe, (win->rect.x - inf->bar_ls_width), win->rect.y + win->rect.height, inf->bottom_ls_width, inf->bottom_ls_height, win_bottom_ls);
-    fb_draw_buffer(vbe, ((win->rect.x - inf->bar_ls_width) + (inf->bar_ls_width + win->rect.width)), win->rect.y + win->rect.height, inf->bottom_rs_width, inf->bottom_rs_height, win_bottom_rs);
+    fb_draw_buffer(wm_fb, (win->rect.x - inf->bar_ls_width), win->rect.y + win->rect.height, inf->bottom_ls_width, inf->bottom_ls_height, win_bottom_ls);
+    fb_draw_buffer(wm_fb, ((win->rect.x - inf->bar_ls_width) + (inf->bar_ls_width + win->rect.width)), win->rect.y + win->rect.height, inf->bottom_rs_width, inf->bottom_rs_height, win_bottom_rs);
 
     for (int i = 0; i < win->rect.width; i++) {
-        fb_draw_buffer(vbe, ((win->rect.x - inf->bar_ls_width) + (inf->bar_ls_width + i)), win->rect.y - inf->bar_ls_height, inf->bar_ms_width, inf->bar_ms_height, win_bar_ms);
-        fb_draw_buffer(vbe, ((win->rect.x - inf->bar_ls_width) + (inf->bottom_ls_width + i)), win->rect.y + win->rect.height, inf->bottom_ms_width, inf->bottom_ms_height, win_bottom_ms);
+        fb_draw_buffer(wm_fb, ((win->rect.x - inf->bar_ls_width) + (inf->bar_ls_width + i)), win->rect.y - inf->bar_ls_height, inf->bar_ms_width, inf->bar_ms_height, win_bar_ms);
+        fb_draw_buffer(wm_fb, ((win->rect.x - inf->bar_ls_width) + (inf->bottom_ls_width + i)), win->rect.y + win->rect.height, inf->bottom_ms_width, inf->bottom_ms_height, win_bottom_ms);
     }
 
     for (int i = 0; i < win->rect.height; i++) {
-        fb_draw_buffer(vbe, (win->rect.x - inf->bar_ls_width), win->rect.y + i, inf->ls_width, inf->ls_height, win_ls);
-        fb_draw_buffer(vbe, (win->rect.x - inf->bar_ls_width) + win->rect.width + inf->bar_rs_width, win->rect.y + i, inf->rs_width, inf->rs_height, win_rs);
+        fb_draw_buffer(wm_fb, (win->rect.x - inf->bar_ls_width), win->rect.y + i, inf->ls_width, inf->ls_height, win_ls);
+        fb_draw_buffer(wm_fb, (win->rect.x - inf->bar_ls_width) + win->rect.width + inf->bar_rs_width, win->rect.y + i, inf->rs_width, inf->rs_height, win_rs);
     }
 
-    fb_draw_str(vbe, win->rect.x + inf->bar_ls_width, (win->rect.y - inf->bar_ls_height) + 2, 0xFF000000, win->title, kernel_font);
-
-    fb_blit_fb(vbe, win->fb, win->rect.x, win->rect.y);
+    fb_draw_str(wm_fb, win->rect.x + inf->bar_ls_width, (win->rect.y - inf->bar_ls_height) + 2, 0xFF000000, win->title, kernel_font);
 }
 
 void window_add_element(window_info* win, element_info* element) {
@@ -51,6 +49,8 @@ window_info* window_create(u32 x, u32 y, u32 width, u32 height, char* name) {
     win->rect.y = y;
     win->rect.width = width;
     win->rect.height = height;
+
+    win->dirty = true;
 
     win->buffer = (u32*)kmalloc(width * height * 4);
     win->pitch = width * 4;

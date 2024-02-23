@@ -40,7 +40,8 @@
         "window.h": "c",
         "wm.h": "c",
         "mouse.h": "c",
-        "rect.h": "c"
+        "rect.h": "c",
+        "vbe.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

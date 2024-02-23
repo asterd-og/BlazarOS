@@ -113,16 +113,12 @@ void vbe_task() {
     int frame_counter = 0;
     int second_counter = rtc_get(RTC_SECOND);
 
-    window_info* win = window_create(190, 150, 450, 250, "Terminal");
+    window_info* win = wm_create_window(190, 150, 450, 250, "Terminal");
     
     element_info* btn = btn_create(25, 25, 50, 0, "Buttons!!", win);
 
     while (1) {
-        fb_clear(vbe, 0xFFFF00FF);
-        btn_draw(btn);
-        window_draw_decorations(win);
         wm_update();
-        vbe_swap();
         frame_counter++;
         if (second_counter != rtc_get(RTC_SECOND)) {
             second_counter = rtc_get(RTC_SECOND);

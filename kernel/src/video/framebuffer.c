@@ -28,6 +28,7 @@ void fb_set_pixel(framebuffer_info* fb, u32 x, u32 y, u32 color) {
 }
 
 u32 fb_get_pixel(framebuffer_info* fb, u32 x, u32 y) {
+    if (x > fb->width || x < 0 || y > fb->height || y < 0) return 0;
     return fb->buffer[y * fb->pitch / 4 + x];
 }
 

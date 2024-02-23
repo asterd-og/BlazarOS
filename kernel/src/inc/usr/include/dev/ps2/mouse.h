@@ -11,4 +11,6 @@ extern u32 mouse_y;
 extern bool mouse_left_pressed;
 extern bool mouse_right_pressed;
 
+extern bool mouse_moved;
+
 void mouse_init();
