@@ -19,7 +19,8 @@ extern u64 sched_pid;
 
 enum {
     PROC_DEAD,
-    PROC_RUNNING
+    PROC_RUNNING,
+    PROC_IDLE
 };
 
 enum {

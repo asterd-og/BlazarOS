@@ -22,12 +22,12 @@ void window_draw_decorations(window_info* win) {
     fb_draw_buffer(wm_fb, (win->rect.x - inf->bar_ls_width), win->rect.y + win->rect.height, inf->bottom_ls_width, inf->bottom_ls_height, win_bottom_ls);
     fb_draw_buffer(wm_fb, ((win->rect.x - inf->bar_ls_width) + (inf->bar_ls_width + win->rect.width)), win->rect.y + win->rect.height, inf->bottom_rs_width, inf->bottom_rs_height, win_bottom_rs);
 
-    for (int i = 0; i < win->rect.width; i++) {
+    for (u32 i = 0; i < win->rect.width; i++) {
         fb_draw_buffer(wm_fb, ((win->rect.x - inf->bar_ls_width) + (inf->bar_ls_width + i)), win->rect.y - inf->bar_ls_height, inf->bar_ms_width, inf->bar_ms_height, win_bar_ms);
         fb_draw_buffer(wm_fb, ((win->rect.x - inf->bar_ls_width) + (inf->bottom_ls_width + i)), win->rect.y + win->rect.height, inf->bottom_ms_width, inf->bottom_ms_height, win_bottom_ms);
     }
 
-    for (int i = 0; i < win->rect.height; i++) {
+    for (u32 i = 0; i < win->rect.height; i++) {
         fb_draw_buffer(wm_fb, (win->rect.x - inf->bar_ls_width), win->rect.y + i, inf->ls_width, inf->ls_height, win_ls);
         fb_draw_buffer(wm_fb, (win->rect.x - inf->bar_ls_width) + win->rect.width + inf->bar_rs_width, win->rect.y + i, inf->rs_width, inf->rs_height, win_rs);
     }
@@ -36,7 +36,7 @@ void window_draw_decorations(window_info* win) {
 }
 
 void window_add_element(window_info* win, element_info* element) {
-    win->elements[win->element_count++] = element;
+    win->elements[win->element_count++] = (struct element_info*)element;
 }
 
 window_info* window_create(u32 x, u32 y, u32 width, u32 height, char* name) {
@@ -51,11 +51,12 @@ window_info* window_create(u32 x, u32 y, u32 width, u32 height, char* name) {
     win->rect.height = height;
 
     win->dirty = true;
+    win->fb_dirty = true;
 
     win->buffer = (u32*)kmalloc(width * height * 4);
     win->pitch = width * 4;
 
-    win->elements = (element_info**)kmalloc(sizeof(element_info) * 256);
+    win->elements = (struct element_info**)kmalloc(sizeof(element_info) * 256);
     memset(win->elements, 0, sizeof(element_info) * 256);
     win->element_count = 0;
 

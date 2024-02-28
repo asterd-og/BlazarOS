@@ -38,6 +38,7 @@ typedef struct {
     u32 pitch;
     u32* buffer;
     framebuffer_info* fb;
+    bool fb_dirty;
     
     char* title;
     int title_len;

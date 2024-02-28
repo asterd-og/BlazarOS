@@ -14,7 +14,6 @@ void smp_init_cpu(struct limine_smp_info* smp_info) {
     gdt_init();
     idt_reinit();
     vmm_switch_pm(vmm_kernel_pm);
-    sse_init();
 
     lapic_init();
     

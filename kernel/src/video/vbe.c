@@ -4,7 +4,7 @@
 #include <dev/initrd/blazfs.h>
 #include <lib/atomic.h>
 
-struct limine_framebuffer_response* limine_fb = NULL;
+struct limine_framebuffer* limine_fb = NULL;
 u32* lfb_buffer = NULL;
 u32* vbe_buffer = NULL;
 u32 vbe_size = 0;

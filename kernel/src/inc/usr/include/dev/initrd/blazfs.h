@@ -26,5 +26,5 @@ enum {
 
 int blazfs_init(void* addr);
 
-int blazfs_read(const char* file_name, char* buffer);
+int blazfs_read(const char* file_name, u8* buffer);
 size_t blazfs_ftell(const char* file_name);

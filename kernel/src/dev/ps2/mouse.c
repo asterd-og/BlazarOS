@@ -35,13 +35,16 @@ u8 mouse_read() {
 }
 
 void mouse_update(i8 accel_x, i8 accel_y) {
-    if (mouse_wrap_x + accel_x <= 0) { mouse_wrap_x = 0; return; }
-    if (mouse_wrap_y - accel_y <= 0) { mouse_wrap_y = 0; return; }
-    if (mouse_wrap_x + accel_x > (i32)vbe->width) { mouse_wrap_x = vbe->width; return; }
-    if (mouse_wrap_y - accel_y > (i32)vbe->height) { mouse_wrap_y = vbe->height; return ;}
-
-    mouse_wrap_x += accel_x;
-    mouse_wrap_y -= accel_y;
+    if (mouse_wrap_x + accel_x <= 0) { mouse_wrap_x = 0; }
+    else {
+        mouse_wrap_x += accel_x;
+    }
+    if (mouse_wrap_y - accel_y <= 0) { mouse_wrap_y = 0; }
+    else {
+        mouse_wrap_y -= accel_y;
+    }
+    if (mouse_wrap_x + accel_x > (i32)vbe->width) { mouse_wrap_x = vbe->width; }
+    if (mouse_wrap_y - accel_y > (i32)vbe->height) { mouse_wrap_y = vbe->height; }
 
     mouse_x = (u32)mouse_wrap_x;
     mouse_y = (u32)mouse_wrap_y;

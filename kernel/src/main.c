@@ -98,7 +98,7 @@ static void hcf(void) {
 }
 
 void putchar_(char c) {
-    char str[] = {c};
+    char str[1] = {c};
     flanterm_write(ft_ctx, str, 1);
 }
 
@@ -106,26 +106,10 @@ void* get_mod_addr(int pos) {
     return module_request.response->modules[pos]->address;
 }
 
-void vbe_task() {
-    theme_init("theme.tga");
-    btn_init();
-    window_init();
-    int frame_counter = 0;
-    int second_counter = rtc_get(RTC_SECOND);
-
-    window_info* win = wm_create_window(190, 150, 450, 250, "Terminal");
-    window_info* win2 = wm_create_window(190, 150, 450, 250, "Terminal");
-    
-    element_info* btn = btn_create(25, 25, 50, 0, "Buttons!!", win);
-
+void terminal_task() {
+    printf("C:/> ");
     while (1) {
-        wm_update();
-        frame_counter++;
-        if (second_counter != rtc_get(RTC_SECOND)) {
-            second_counter = rtc_get(RTC_SECOND);
-            serial_printf("FPS = %d\n", frame_counter);
-            frame_counter = 0;
-        }
+        __asm__ volatile("Nop");
     }
 }
 
@@ -148,9 +132,6 @@ void _start(void) {
 
     framebuffer = framebuffer_request.response->framebuffers[0];
     
-    sse_init();
-    serial_printf("SSE Initialised.\n");
-
     ft_ctx = flanterm_fb_simple_init(
         framebuffer->address, framebuffer->width,
         framebuffer->height, framebuffer->pitch
@@ -199,20 +180,15 @@ void _start(void) {
 
     serial_printf("SMP Initialised.\n");
 
-    mouse_init();
     keyboard_init();
-
-    vbe_init(framebuffer);
-
-    wm_init();
 
     hpet_init();
     sched_init();
-    sched_new_proc(vbe_task, 0, PROC_PR_HIGH);
+    sched_new_proc(terminal_task, 1, PROC_PR_HIGH);
     irq_register(SCHED_INT_VEC - 32, sched_switch);
 
     // We're done, just hang...
     while (true) {
-        __asm__ volatile ("nop");
+        __asm__ volatile ("hlt");
     }
 }

@@ -1,14 +1,14 @@
 #include <lib/hashmap.h>
 
-u64 hashmap_hash(char* key) {
+u64 hashmap_hash(const char* key) {
     u64 hash = 5381;
     int c = 0;
-    while (c = *key++)
+    while ((c = *key++))
         hash = ((hash << 5) + hash) + c; // hash * 33 + c
     return hash;
 }
 
-void hashmap_push(hashmap_table* map, char* key, u8* value) {
+void hashmap_push(hashmap_table* map, const char* key, u8* value) {
     u64 key_hashed = hashmap_hash(key) % map->max_items;
     if (map->table[key_hashed].collisions == 0) {
         map->table[key_hashed].entries = (hashmap_value*)kmalloc(sizeof(hashmap_value) * map->max_collisions);
@@ -22,12 +22,12 @@ void hashmap_push(hashmap_table* map, char* key, u8* value) {
     entry->collisions++;
 }
 
-u8* hashmap_get(hashmap_table* map, char* key) {
+u8* hashmap_get(hashmap_table* map, const char* key) {
     u64 key_hashed = hashmap_hash(key) % map->max_items;
     hashmap_info entry = map->table[key_hashed];
     if (map->table[key_hashed].collisions == 0) return NULL;
     if (entry.collisions > 1) {
-        for (u64 i = 0; i < entry.collisions; i++)
+        for (int i = 0; i < entry.collisions; i++)
             if (!strcmp(key, entry.entries[i].key))
                 return entry.entries[i].value;
         return NULL;

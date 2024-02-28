@@ -53,6 +53,9 @@ override CFLAGS += \
     -fPIE \
     -m64 \
     -march=x86-64 \
+    -mno-mmx \
+    -mno-sse \
+    -mno-sse2 \
     -mno-80387 \
     -mno-red-zone
 

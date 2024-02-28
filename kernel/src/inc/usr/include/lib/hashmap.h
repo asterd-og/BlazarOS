@@ -28,5 +28,5 @@ typedef struct {
 } hashmap_table;
 
 hashmap_table* hashmap_init(int size, int item_size, int max_collisions);
-void hashmap_push(hashmap_table* table, char* key, u8* value);
-u8* hashmap_get(hashmap_table* table, char* key);
+void hashmap_push(hashmap_table* table, const char* key, u8* value);
+u8* hashmap_get(hashmap_table* table, const char* key);

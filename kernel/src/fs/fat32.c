@@ -4,11 +4,11 @@
 // For some reason my fat32 doesn't works with KASLR! lmao...
 
 fat32_directory* fat32_get_dir(fat32_fs* fs, const char* path) {
-    fat32_directory* root_dir = hashmap_get(fs->cache_hashmap, path);
+    fat32_directory* root_dir = (fat32_directory*)hashmap_get(fs->cache_hashmap, path);
     if (root_dir != NULL) /* Directory has been hashed/cached already, return that.*/
         return root_dir;
     root_dir = (fat32_directory*)kmalloc(sizeof(fat32_directory));
-    fat32_entry* entry = fat32_get_entry(fs, fs->root_dir, path);
+    fat32_entry* entry = fat32_get_entry(fs->root_dir, path);
     memset(root_dir, 0, sizeof(fat32_directory));
     if (entry == NULL || root_dir == NULL)
         return NULL;
@@ -16,12 +16,12 @@ fat32_directory* fat32_get_dir(fat32_fs* fs, const char* path) {
                          | ((u32)entry->low_cluster_entry);
     root_dir->sector = fat32_get_sector(fs, root_dir->cluster);
     fat32_populate_dir(fs, root_dir);
-    hashmap_push(fs->cache_hashmap, path, root_dir);
+    hashmap_push(fs->cache_hashmap, path, (u8*)root_dir);
     return root_dir;
 }
 
 int fat32_read(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* buffer) {
-    fat32_entry* entry = fat32_get_entry(fs, dir, filename);
+    fat32_entry* entry = fat32_get_entry(dir, filename);
     if (entry == NULL) return 1;
 
     u32 cluster = ((u32)entry->high_cluster_entry << 16)
@@ -30,7 +30,7 @@ int fat32_read(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* buf
     ata_read(fat32_get_sector(fs, cluster), buffer, 512);
 
     if (entry->size > 512) {
-        for (int i = 0; i < DIV_ROUND_UP(entry->size, 512); i++) {
+        for (unsigned int i = 0; i < DIV_ROUND_UP(entry->size, 512); i++) {
             cluster = fat32_read_cluster_end(fs, cluster);
             ata_read(fat32_get_sector(fs, cluster), buffer + ((i + 1) * 512), 512);
         }
@@ -59,7 +59,7 @@ int fat32_write(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* bu
 
         dir->file_count++;
         ata_write(fat32_get_sector(fs, cluster), buffer, size);
-        fat32_flush_dir(fs, dir);
+        fat32_flush_dir(dir);
         return 0;
     }
     return 1;
@@ -67,7 +67,7 @@ int fat32_write(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* bu
 
 fat32_fs* fat32_init(partition_info pt_info) {
     fat32_bpb* bpb = (fat32_bpb*)kmalloc(sizeof(fat32_bpb));
-    ata_read(pt_info.relative_sector, bpb, sizeof(fat32_bpb));
+    ata_read(pt_info.relative_sector, (u8*)bpb, sizeof(fat32_bpb));
     fat32_ebpb* ebpb = (fat32_ebpb*)kmalloc(sizeof(fat32_ebpb));
     memcpy(ebpb, bpb->extended_section, sizeof(fat32_ebpb));
 
@@ -79,7 +79,7 @@ fat32_fs* fat32_init(partition_info pt_info) {
     fs->root_dir->cluster = ebpb->root_cluster;
     fs->root_dir->sector = fat32_get_sector(fs, ebpb->root_cluster);
     fs->fat_info = (fat32_info*)kmalloc(sizeof(fat32_info));
-    ata_read(ebpb->fsinfo_sector + pt_info.relative_sector, fs->fat_info, sizeof(fat32_info));
+    ata_read(ebpb->fsinfo_sector + pt_info.relative_sector, (u8*)fs->fat_info, sizeof(fat32_info));
 
     fat32_populate_dir(fs, fs->root_dir);
 

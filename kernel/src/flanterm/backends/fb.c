@@ -1,4 +1,4 @@
-/* Copyright (C) 2022-2023 mintsuki and contributors.
+/* Copyright (C) 2022-2024 mintsuki and contributors.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -476,7 +476,8 @@ static void plot_char(struct flanterm_context *_ctx, struct flanterm_fb_char *c,
     }
 }
 
-static void plot_char_fast(struct flanterm_context *_ctx, struct flanterm_fb_char *old, struct flanterm_fb_char *c, size_t x, size_t y) {
+#ifdef FLANTERM_FB_ENABLE_MASKING
+static void plot_char_masked(struct flanterm_context *_ctx, struct flanterm_fb_char *old, struct flanterm_fb_char *c, size_t x, size_t y) {
     struct flanterm_fb_context *ctx = (void *)_ctx;
 
     if (x >= _ctx->cols || y >= _ctx->rows) {
@@ -517,6 +518,7 @@ static void plot_char_fast(struct flanterm_context *_ctx, struct flanterm_fb_cha
         }
     }
 }
+#endif
 
 static inline bool compare_char(struct flanterm_fb_char *a, struct flanterm_fb_char *b) {
     return !(a->c != b->c || a->bg != b->bg || a->fg != b->fg);
@@ -764,12 +766,16 @@ static void flanterm_fb_double_buffer_flush(struct flanterm_context *_ctx) {
         if (ctx->map[offset] == NULL) {
             continue;
         }
-        struct flanterm_fb_char *old = &ctx->grid[offset];
-        if (q->c.bg == old->bg && q->c.fg == old->fg) {
-            plot_char_fast(_ctx, old, &q->c, q->x, q->y);
-        } else {
+        #ifdef FLANTERM_FB_ENABLE_MASKING
+            struct flanterm_fb_char *old = &ctx->grid[offset];
+            if (q->c.bg == old->bg && q->c.fg == old->fg) {
+                plot_char_masked(_ctx, old, &q->c, q->x, q->y);
+            } else {
+                plot_char(_ctx, &q->c, q->x, q->y);
+            }
+        #else
             plot_char(_ctx, &q->c, q->x, q->y);
-        }
+        #endif
         ctx->grid[offset] = q->c;
         ctx->map[offset] = NULL;
     }

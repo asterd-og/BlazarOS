@@ -1,4 +1,5 @@
 #include <dev/serial/serial.h>
+#include <lib/atomic.h>
 
 int serial_bus_status() {
     return inb(COM1 + 5) & 0x20;
@@ -10,11 +11,15 @@ void serial_write_char(char c, void* extra) {
     outb(COM1, c);
 }
 
+locker_info serial_lock;
+
 void serial_printf(const char* format, ...) {
+    lock(&serial_lock);
     va_list args;
     va_start(args, format);
     vfctprintf(serial_write_char, NULL, format, args);
     va_end(args);
+    unlock(&serial_lock);
 }
 
 void serial_init() {

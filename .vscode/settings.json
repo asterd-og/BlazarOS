@@ -41,7 +41,10 @@
         "wm.h": "c",
         "mouse.h": "c",
         "rect.h": "c",
-        "vbe.h": "c"
+        "vbe.h": "c",
+        "rtc.h": "c",
+        "blazfs.h": "c",
+        "hashmap.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

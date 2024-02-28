@@ -28,6 +28,7 @@ process* sched_new_proc(void* func, u64 cpu_id, u8 priority) {
     }
 
     process* proc = (process*)kmalloc(sizeof(process));
+    cpu_info* cpu = get_cpu(cpu_id);
 
     proc->PID = sched_pid;
     proc->pm = vmm_new_pm();
@@ -45,9 +46,9 @@ process* sched_new_proc(void* func, u64 cpu_id, u8 priority) {
     proc->stack_addr = (u64)(stack);
     proc->regs.rsp = (u64)(stack + (PAGE_SIZE * 8));
 
-    get_cpu(cpu_id)->proc_list[get_cpu(cpu_id)->proc_size] = proc;
+    cpu->proc_list[cpu->proc_size] = proc;
     sched_pid++;
-    get_cpu(cpu_id)->proc_size++;
+    cpu->proc_size++;
     unlock(&sched_lock);
 
     return proc;
@@ -62,6 +63,7 @@ process* sched_new_elf(void* elf, u64 cpu_id, u8 priority) {
     }
 
     process* proc = (process*)kmalloc(sizeof(process));
+    cpu_info* cpu = get_cpu(cpu_id);
 
     proc->PID = sched_pid;
     proc->pm = vmm_new_pm();
@@ -70,7 +72,7 @@ process* sched_new_elf(void* elf, u64 cpu_id, u8 priority) {
     proc->cpu_id = cpu_id;
 
     u64 entry_point = elf_load(elf, proc->pm);
-    if (entry_point == -1) {
+    if (entry_point == (u64)-1) {
         serial_printf("Couldn't open elf!\n");
         kfree(proc);
         unlock(&sched_lock);
@@ -86,9 +88,9 @@ process* sched_new_elf(void* elf, u64 cpu_id, u8 priority) {
     char* stack = (char*)kmalloc(8 * PAGE_SIZE); // 32 kb
     proc->regs.rsp = (u64)(stack + (PAGE_SIZE * 8));
 
-    get_cpu(cpu_id)->proc_list[get_cpu(cpu_id)->proc_size] = proc;
+    cpu->proc_list[cpu->proc_size] = proc;
     sched_pid++;
-    get_cpu(cpu_id)->proc_size++;
+    cpu->proc_size++;
     unlock(&sched_lock);
 
     return proc;
@@ -121,8 +123,9 @@ void sched_remove_proc(u64 pid) {
     }
 
     vmm_destroy_pm(proc->pm);
-    //kfree((void*)(proc->regs.rsp - (PAGE_SIZE * 8)));
-    // Page faults me for some obscure reason ^
+    // kfree((void*)(proc->regs.rsp - (PAGE_SIZE * 8)));
+    // ^ Page faults me, probably because the stack top address changes as
+    // new things are put into the stack.
     kfree(proc);
 
     cpu->proc_size--;
@@ -146,7 +149,7 @@ u32 sched_get_cpu_load(cpu_info* cpu) {
 }
 
 void sched_update_usage(cpu_info* cpu) {
-    u64 current_time = rtc_get_unix();  // Replace with the actual function to get the current time
+    u64 current_time = rtc_get_unix();
     cpu->total_time = current_time;
     cpu->last_idle_time = current_time;
 }
@@ -154,40 +157,39 @@ void sched_update_usage(cpu_info* cpu) {
 void sched_switch(registers* regs) {
     lock(&sched_lock);
     cpu_info* cpu = this_cpu();
-    if (cpu->current_proc != NULL) {
-        if (cpu->proc_pr_count == cpu->current_proc->priority)
-            cpu->proc_pr_count = 0;
-        else {
-            cpu->proc_pr_count++;
-            unlock(&sched_lock);
-            return;
+    if (cpu->proc_size > 0) {
+        if (cpu->current_proc != NULL) {
+            if (cpu->proc_pr_count == cpu->current_proc->priority)
+                cpu->proc_pr_count = 0;
+            else {
+                cpu->proc_pr_count++;
+                unlock(&sched_lock);
+                return;
+            }
+            cpu->current_proc->regs = *regs;
         }
-        cpu->current_proc->regs = *regs;
-    }
-    cpu->current_proc = cpu->proc_list[cpu->proc_idx];
-    *regs = cpu->current_proc->regs;
-    vmm_switch_pm(cpu->current_proc->pm);
+        cpu->current_proc = cpu->proc_list[cpu->proc_idx];
+        *regs = cpu->current_proc->regs;
+        vmm_switch_pm(cpu->current_proc->pm);
 
-    cpu->proc_idx++;
-    if (cpu->proc_idx == cpu->proc_size) {
-        cpu->proc_idx = 0;
-    }
-    if (cpu->proc_list[cpu->proc_idx]->state == PROC_DEAD) {
-        sched_remove_proc(cpu->proc_list[cpu->proc_idx]->PID);
-        cpu->proc_idx = 0;
+        cpu->proc_idx++;
+        if (cpu->proc_idx == cpu->proc_size) {
+            cpu->proc_idx = 0;
+        }
+        if (cpu->proc_list[cpu->proc_idx]->state == PROC_DEAD) {
+            sched_remove_proc(cpu->proc_list[cpu->proc_idx]->PID);
+            cpu->proc_idx = 0;
+        }
     }
     unlock(&sched_lock);
 }
 
 void sched_idle() {
-    while (true) {
-        __asm__ volatile ("nop");
+    while (1) {
+        __asm__ volatile ("hlt");
     }
 }
 
 void sched_init() {
     sched_initialised = true;
-    cpu_info* cpu = this_cpu();
-    sched_new_proc(sched_idle, lapic_get_id(), PROC_PR_LOW);
-    cpu->current_proc = NULL;
 }

@@ -8,7 +8,7 @@ u32 pt_idx;
 
 void mbr_init() {
     mbr = (mbr_info*)kmalloc(sizeof(mbr_info));
-    ata_read(0, mbr, sizeof(mbr_info));
+    ata_read(0, (u8*)mbr, sizeof(mbr_info));
     fats = (fat32_fs*)kmalloc(sizeof(fat32_fs) * 5);
     memset(fats, 0, sizeof(fat32_fs) * 5);
 

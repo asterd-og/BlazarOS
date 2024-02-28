@@ -3,7 +3,7 @@
 blazfs_head_info* blazfs_head = NULL;
 char* blazfs_addr = NULL;
 
-int blazfs_read(const char* file_name, char* buffer) {
+int blazfs_read(const char* file_name, u8* buffer) {
     blazfs_file_info* blazfs_file = NULL;
     
     for (size_t i = 0; i < blazfs_head->file_count; i++) {

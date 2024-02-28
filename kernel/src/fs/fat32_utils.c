@@ -89,9 +89,8 @@ void fat32_populate_dir(fat32_fs* fs, fat32_directory* dir) {
     int times_iterated = 0;
     dir->entries = (fat32_entry*)kmalloc(sizeof(fat32_entry) * 16);
     dir->file_count = 0;
-    char* name;
     while (true) {
-        ata_read(next_sector, &entries[0], 512);
+        ata_read(next_sector, (u8*)&entries[0], 512);
         for (int i = 0; i < 16; i++) {
             if (entries[i].name[0] == 0)
                 return;
@@ -130,7 +129,7 @@ u32 fat32_allocate_cluster(fat32_fs* fs) {
         }
 
         kfree(cluster_buf);
-        ata_write(fs->ebpb->fsinfo_sector, fs->fat_info, sizeof(fat32_info));
+        ata_write(fs->ebpb->fsinfo_sector, (u8*)fs->fat_info, sizeof(fat32_info));
 
         return ret;
     } else {
@@ -144,7 +143,7 @@ u32 fat32_allocate_cluster(fat32_fs* fs) {
 
 u32 fat32_get_new_cluster_chain(fat32_fs* fs, u32 cluster_num) {
     u32 first_cluster = fat32_allocate_cluster(fs);
-    for (int i = 0; i < cluster_num - 1; i++) {
+    for (u32 i = 0; i < cluster_num - 1; i++) {
         if (fat32_allocate_cluster(fs) == 0) {
             return 0;
         }
@@ -152,7 +151,7 @@ u32 fat32_get_new_cluster_chain(fat32_fs* fs, u32 cluster_num) {
     return first_cluster;
 }
 
-void fat32_flush_dir(fat32_fs* fs, fat32_directory* working_dir) {
+void fat32_flush_dir(fat32_directory* working_dir) {
     u32 root_sect_count = DIV_ROUND_UP(working_dir->file_count * sizeof(fat32_entry), 512);
 
     u8* copy_buf = kmalloc(root_sect_count * 512);
@@ -163,9 +162,9 @@ void fat32_flush_dir(fat32_fs* fs, fat32_directory* working_dir) {
     kfree(copy_buf);
 }
 
-fat32_entry* fat32_get_entry(fat32_fs* fs, fat32_directory* dir, const char* name) {
+fat32_entry* fat32_get_entry(fat32_directory* dir, const char* name) {
     char* fname = fat32_unprocess_name(name);
-    for (int i = 0; i < dir->file_count; i++)
+    for (u32 i = 0; i < dir->file_count; i++)
         if (!memcmp(dir->entries[i].name, name, strlen(name))) {
             kfree(fname);
             return &dir->entries[i];

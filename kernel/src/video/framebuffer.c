@@ -1,5 +1,6 @@
 #include <video/framebuffer.h>
 #include <mm/heap/heap.h>
+#include <lib/string/string.h>
 
 void fb_draw_char(framebuffer_info* fb, u32 x, u32 y, u32 color, char c, font_info font) {
     if (c == 0) return;
@@ -56,10 +57,12 @@ void fb_draw_outline(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 color
 }
 
 void fb_draw_tga(framebuffer_info* fb, u32 x, u32 y, tga_info* tga) {
+    u32 scr_off = y * fb->pitch / 4 + x;
+    u32 buf_off = 0;
     for (u32 yy = 0; yy < tga->height; yy++) {
-        for (u32 xx = 0; xx < tga->width; xx++) {
-            fb_set_pixel(fb, xx + x, yy + y, tga->data[xx + (yy * tga->width)]);
-        }
+        memcpy(fb->buffer + scr_off, tga->data + buf_off, tga->width * 4);
+        buf_off += tga->width;
+        scr_off += fb->width;
     }
 }
 
@@ -73,10 +76,12 @@ void fb_draw_fake_alpha_tga(framebuffer_info* fb, u32 x, u32 y, u32 alpha, tga_i
 }
 
 void fb_draw_buffer(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32* buf) {
+    u32 scr_off = y * fb->pitch / 4 + x;
+    u32 buf_off = 0;
     for (u32 yy = 0; yy < h; yy++) {
-        for (u32 xx = 0; xx < w; xx++) {
-            fb_set_pixel(fb, xx + x, yy + y, buf[xx + (yy * w)]);
-        }
+        memcpy(fb->buffer + scr_off, buf + buf_off, w * 4);
+        buf_off += w;
+        scr_off += fb->width;
     }
 }
 
@@ -90,15 +95,17 @@ void fb_draw_fake_alpha_buffer(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h,
 }
 
 void fb_blit_fb(framebuffer_info* to, framebuffer_info* from, u32 x, u32 y) {
-    for (u32 xx = 0; xx < from->width; xx++) {
-        for (u32 yy = 0; yy < from->height; yy++) {
-            fb_set_pixel(to, xx + x, yy + y, fb_get_pixel(from, xx, yy));
-        }
+    u32 scr_off = y * to->pitch / 4 + x;
+    u32 buf_off = 0;
+    for (u32 yy = 0; yy < from->height; yy++) {
+        memcpy(to->buffer + scr_off, from->buffer + buf_off, from->width * 4);
+        buf_off += from->width;
+        scr_off += to->width;
     }
 }
 
 void fb_clear(framebuffer_info* fb, u32 color) {
-    for (int i = 0; i < fb->width * fb->height; i++) fb->buffer[i] = color;
+    for (u32 i = 0; i < fb->width * fb->height; i++) fb->buffer[i] = color;
 }
 
 framebuffer_info* fb_create(u32* buffer, u32 width, u32 height, u32 pitch) {

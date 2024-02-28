@@ -3,11 +3,15 @@
 #include <dev/ps2/mouse.h>
 #include <desktop/window.h>
 #include <video/framebuffer.h>
+#include <video/vbe.h>
 
 wm_theme_info* wm_theme = NULL;
 
 window_info* wm_window_list[128];
-u64 wm_window_list_idx = 0;
+u8 wm_window_list_idx = 0;
+
+u8 wm_window_z_order[128];
+u8 wm_window_z_idx = 0;
 
 rectangle wm_mouse_rect;
 
@@ -39,7 +43,9 @@ framebuffer_info* wm_fb = NULL;
 window_info* wm_create_window(int x, int y, int width, int height, char* title) {
     window_info* win = window_create(x, y, width, height, title);
     wm_window_list[wm_window_list_idx] = win;
+    wm_window_z_order[wm_window_z_idx] = wm_window_list_idx;
     wm_window_list_idx++;
+    wm_window_z_idx++;
     return win;
 }
 
@@ -70,16 +76,18 @@ void wm_draw_mouse() {
 }
 
 void wm_update() {
-    for (int i = 0; i < wm_window_list_idx; i++) {
-        if (wm_window_list[i]->dirty) {
-            window_info* win = wm_window_list[i];
-            fb_clear(wm_fb, 0xFFFF00FF);
-            window_draw_decorations(win);
+    for (int i = 0; i < wm_window_z_idx; i++) {
+        if (wm_window_list[wm_window_z_order[i]]->dirty || wm_window_list[wm_window_z_order[i]]->fb_dirty) {
+            window_info* win = wm_window_list[wm_window_z_order[i]];
+            if (wm_window_list[wm_window_z_order[i]]->dirty) {
+                window_draw_decorations(win);
+            }
             fb_blit_fb(wm_fb, win->fb, win->rect.x, win->rect.y);
             fb_blit_fb(vbe, wm_fb, 0, 0);
             wm_draw_mouse();
             vbe_swap();
-            wm_window_list[i]->dirty = false;
+            win->dirty = false;
+            win->fb_dirty = false;
         }
     }
     if (mouse_moved) {
