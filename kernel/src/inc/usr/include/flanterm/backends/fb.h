@@ -56,6 +56,8 @@ struct flanterm_fb_context {
     size_t font_height;
     size_t glyph_width;
     size_t glyph_height;
+    size_t cursor_height;
+    size_t cursor_width;
 
     size_t font_scale_x;
     size_t font_scale_y;
@@ -144,8 +146,13 @@ static inline struct flanterm_context *flanterm_fb_simple_init(
     uint8_t blue_mask_size, uint8_t blue_mask_shift
 #endif
 ) {
+    #ifdef FLANTERM_SCALE_DEFAULT
+    size_t font_scale_x = 2;
+    size_t font_scale_y = 2;
+    #else
     size_t font_scale_x = 1;
     size_t font_scale_y = 1;
+    #endif
     if (width >= (1920 + 1920 / 3) && height >= (1080 + 1080 / 3)) {
         font_scale_x = 2;
         font_scale_y = 2;

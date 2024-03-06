@@ -184,12 +184,6 @@ void sched_switch(registers* regs) {
     unlock(&sched_lock);
 }
 
-void sched_idle() {
-    while (1) {
-        __asm__ volatile ("hlt");
-    }
-}
-
 void sched_init() {
     sched_initialised = true;
 }

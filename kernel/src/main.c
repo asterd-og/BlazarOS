@@ -1,3 +1,4 @@
+// #define FLANTERM_SCALE_DEFAULT
 #include <types.h>
 #include <limine.h>
 
@@ -49,12 +50,7 @@
 #include <video/libs/tga.h>
 #include <video/vbe.h>
 
-#include <desktop/wm.h>
-#include <desktop/window.h>
-
-#include <desktop/elements/button.h>
-
-#include <desktop/theme/theme_man.h>
+#include <builtin/desktop.h>
 
 // Set the base revision to 1, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
@@ -104,13 +100,6 @@ void putchar_(char c) {
 
 void* get_mod_addr(int pos) {
     return module_request.response->modules[pos]->address;
-}
-
-void terminal_task() {
-    printf("C:/> ");
-    while (1) {
-        __asm__ volatile("Nop");
-    }
 }
 
 // The following will be our kernel's entry point.
@@ -180,11 +169,15 @@ void _start(void) {
 
     serial_printf("SMP Initialised.\n");
 
+    mouse_init();
     keyboard_init();
 
+    vbe_init(framebuffer);
+
     hpet_init();
+
     sched_init();
-    sched_new_proc(terminal_task, 1, PROC_PR_HIGH);
+    desktop_init();
     irq_register(SCHED_INT_VEC - 32, sched_switch);
 
     // We're done, just hang...

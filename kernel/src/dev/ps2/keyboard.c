@@ -1,47 +1,64 @@
 #include <dev/ps2/keyboard.h>
+#include <lib/atomic.h>
 
 bool keyboard_pressed = false;
+bool keyboard_pressed_old = false;
+
 char keyboard_char = '\0';
 bool keyboard_caps = false;
 bool keyboard_shift = false;
 
-void keyboard_handler(registers* regs) {
-    (void)regs;
+locker_info keyboard_lock;
 
-    u8 key = inb(0x60);
-
-    if (!(key & 0x80)) {
-        switch (key) {
-            case 0x2a:
-                // Shift
-                keyboard_shift = true;
-                break;
-            case 0x3a:
-                // Caps
-                keyboard_caps = !keyboard_caps;
-                break;
-            default:
-                // Letter
+void keyboard_handle_key(u8 key) {
+    lock(&keyboard_lock);
+    switch (key) {
+        case 0x2a:
+            // Shift
+            keyboard_shift = true;
+            break;
+        case 0xaa:
+            keyboard_shift = false;
+            break;
+        case 0x3a:
+            // Caps
+            keyboard_caps = !keyboard_caps;
+            break;
+        default:
+            // Letter
+            if (!(key & 0x80)) {
                 keyboard_pressed = true;
                 if (keyboard_shift) keyboard_char = kb_map_keys_shift[key];
                 else if (keyboard_caps) keyboard_char = kb_map_keys_caps[key];
                 else keyboard_char = kb_map_keys[key];
-                break;
-        }
+            }
+            break;
+    }
+    unlock(&keyboard_lock);
+}
+
+void keyboard_handler(registers* regs) {
+    (void)regs;
+
+    u8 status;
+    u8 key;
+
+    lapic_eoi();
+
+    status = inb(0x64);
+    if (status & 1) {
+        key = inb(0x60);
+        keyboard_handle_key(key);
     } else {
-        keyboard_pressed = false;
         keyboard_char = 0;
-        switch (key) {
-            case 0xaa:
-                // Shift
-                keyboard_shift = false;
-                break;
-        }
+        keyboard_pressed = false;
     }
 }
 
 char keyboard_get() {
-    return keyboard_char;
+    char c = keyboard_char;
+    keyboard_char = 0;
+    return c;
 }
 
 void keyboard_init() {

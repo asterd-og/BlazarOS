@@ -24,6 +24,10 @@ void lapic_send_all_int(u32 id, u32 vec) {
     lapic_ipi(id, vec | LAPIC_ICRAIS);
 }
 
+void lapic_send_others_int(u32 id, u32 vec) {
+    lapic_ipi(id, vec | LAPIC_ICRAES);
+}
+
 void lapic_init_cpu(u32 id) {
     lapic_ipi(id, (u32)(LAPIC_ICINI | LAPIC_ICPHYS | LAPIC_ICASSR |
        LAPIC_ICEDGE | LAPIC_ICSHRTHND));

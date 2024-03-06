@@ -77,10 +77,18 @@ void wm_draw_mouse() {
 
 void wm_update() {
     for (int i = 0; i < wm_window_z_idx; i++) {
-        if (wm_window_list[wm_window_z_order[i]]->dirty || wm_window_list[wm_window_z_order[i]]->fb_dirty) {
-            window_info* win = wm_window_list[wm_window_z_order[i]];
-            if (wm_window_list[wm_window_z_order[i]]->dirty) {
+        window_info* win = wm_window_list[wm_window_z_order[i]];
+        if (win->dirty || win->fb_dirty) {
+            if (win->dirty) {
                 window_draw_decorations(win);
+            }
+            if (win->fb_dirty) {
+                for (int j = 0; j < win->element_count; j++) {
+                    if (win->elements[j]->dirty) {
+                        win->elements[j]->draw(win->elements[j]);
+                        win->elements[j]->dirty = false;
+                    }
+                }
             }
             fb_blit_fb(wm_fb, win->fb, win->rect.x, win->rect.y);
             fb_blit_fb(vbe, wm_fb, 0, 0);
@@ -88,6 +96,9 @@ void wm_update() {
             vbe_swap();
             win->dirty = false;
             win->fb_dirty = false;
+        }
+        for (int j = 0; j < win->element_count; j++) {
+            win->elements[j]->update(win->elements[j]);
         }
     }
     if (mouse_moved) {

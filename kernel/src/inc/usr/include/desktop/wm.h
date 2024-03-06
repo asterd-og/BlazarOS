@@ -49,14 +49,19 @@ typedef struct {
     int element_count;
 } window_info;
 
-typedef struct {
+struct element_info {
     rectangle rect;
     bool dirty;
 
     u8* data;
 
     window_info* parent;
-} element_info;
+
+    void(*draw)(struct element_info*);
+    void(*update)(struct element_info*);
+};
+
+typedef struct element_info element_info;
 
 typedef struct {
     u32 window_title;

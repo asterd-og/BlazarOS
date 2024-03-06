@@ -16,27 +16,45 @@ void btn_draw(element_info* btn) {
     button_info* btn_info = (button_info*)btn->data;
     framebuffer_info* fb = btn->parent->fb;
 
-    fb_draw_fake_alpha_buffer(fb, btn->rect.x, btn->rect.y, inf->ls_width, inf->ls_height, 0xFF00FF00, btn_ls);
+    if (btn_info->pressed) {
+        fb_draw_fake_alpha_buffer(fb, btn->rect.x, btn->rect.y, inf->ls_width, inf->ls_height, 0xFF00FF00, btn_pressed_ls);
+
+        for (int i = 0; i < btn_info->text_len; i++)
+            fb_draw_buffer(fb, (btn->rect.x + (inf->ls_width + (inf->ms_width * i))), btn->rect.y, inf->ms_width, inf->ms_height, btn_pressed_ms);
+
+        fb_draw_fake_alpha_buffer(fb, (btn->rect.x + (inf->ls_width + (inf->ms_width * (btn_info->text_len - 1)))) + inf->ms_width, btn->rect.y, inf->rs_width, inf->rs_height, 0xFF00FF00, btn_pressed_rs);
+    } else {
+        fb_draw_fake_alpha_buffer(fb, btn->rect.x, btn->rect.y, inf->ls_width, inf->ls_height, 0xFF00FF00, btn_ls);
     
-    for (int i = 0; i < btn_info->text_len; i++)
-        fb_draw_buffer(fb, (btn->rect.x + (inf->ls_width + (inf->ms_width * i))), btn->rect.y, inf->ms_width, inf->ms_height, btn_ms);
+        for (int i = 0; i < btn_info->text_len; i++)
+            fb_draw_buffer(fb, (btn->rect.x + (inf->ls_width + (inf->ms_width * i))), btn->rect.y, inf->ms_width, inf->ms_height, btn_ms);
     
-    fb_draw_fake_alpha_buffer(fb, (btn->rect.x + (inf->ls_width + (inf->ms_width * (btn_info->text_len - 1)))) + inf->ms_width, btn->rect.y, inf->rs_width, inf->rs_height, 0xFF00FF00, btn_rs);
+        fb_draw_fake_alpha_buffer(fb, (btn->rect.x + (inf->ls_width + (inf->ms_width * (btn_info->text_len - 1)))) + inf->ms_width, btn->rect.y, inf->rs_width, inf->rs_height, 0xFF00FF00, btn_rs);
+    }
 
     fb_draw_str(fb, btn->rect.x + inf->ls_width, btn->rect.y + 2, 0xFF000000, btn_info->text, kernel_font);
 }
 
 void btn_update(element_info* btn) {
     button_info* btn_info = (button_info*)btn->data;
-    btn_info->pressed = (rect_colliding_coord(wm_mouse_rect.x, wm_mouse_rect.y, btn->rect.x + btn->parent->rect.x, btn->rect.y + btn->parent->rect.y, btn->rect.width, btn->rect.height) && mouse_left_pressed);
+    bool clicked = (rect_colliding_coord(wm_mouse_rect.x, wm_mouse_rect.y, btn->rect.x + btn->parent->rect.x, btn->rect.y + btn->parent->rect.y, btn->rect.width, btn->rect.height) && mouse_left_pressed);
+    if (clicked && !btn_info->pressed) {
+        btn_info->pressed = true;
+        btn->dirty = true;
+        btn->parent->fb_dirty = true;
+    } else if (!clicked && btn_info->pressed) {
+        btn_info->pressed = false;
+        btn->dirty = true;
+        btn->parent->fb_dirty = true;
+    }
 }
 
-element_info* btn_create(u32 x, u32 y, u32 w, u32 h, char* text, window_info* win) {
+element_info* btn_create(u32 x, u32 y, char* text, window_info* win) {
     element_info* btn = (element_info*)kmalloc(sizeof(element_info));
     btn->rect.x = x;
     btn->rect.y = y;
-    btn->rect.width = w;
-    btn->rect.height = h;
+    btn->rect.width = (strlen(text) * theme_global->button_info.ms_width) + (theme_global->button_info.ls_width * 2);
+    btn->rect.height = theme_global->button_info.ls_height;
 
     btn->dirty = true;
     btn->parent = win;
@@ -48,6 +66,9 @@ element_info* btn_create(u32 x, u32 y, u32 w, u32 h, char* text, window_info* wi
     memcpy(info->text, text, strlen(text));
 
     btn->data = (u8*)info;
+
+    btn->draw = btn_draw;
+    btn->update = btn_update;
 
     return btn;
 }
