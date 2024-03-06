@@ -32,6 +32,7 @@ void desktop_init() {
     btn_init();
     window_init();
 
+    window_info* win2 = wm_create_window(190, 50, 450, 250, "Terminal2");
     window_info* win = wm_create_window(190, 150, 450, 250, "Terminal");
     element_info* btn = btn_create(25, 25, "Buttons!!", win);
     window_add_element(win, btn);

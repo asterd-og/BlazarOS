@@ -34,6 +34,11 @@ struct element_info;
 
 typedef struct {
     rectangle rect;
+    u32 offx;
+    u32 offy;
+    bool moving;
+
+    u8 win_idx;
 
     u32 pitch;
     u32* buffer;
@@ -80,6 +85,13 @@ window_info* wm_create_window(int x, int y, int width, int height, char* title);
 void wm_update();
 void wm_draw();
 
+void wm_bring_to_front(u8 win_idx);
+
 extern framebuffer_info* wm_fb;
 extern rectangle wm_mouse_rect;
 extern wm_theme_info* wm_theme;
+extern window_info* wm_window_list[128];
+extern u8 wm_window_list_idx;
+extern bool wm_redraw;
+extern u8 wm_window_z_order[128];
+extern bool wm_moving_window;

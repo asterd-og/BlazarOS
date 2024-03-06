@@ -45,7 +45,8 @@
         "rtc.h": "c",
         "blazfs.h": "c",
         "hashmap.h": "c",
-        "desktop.h": "c"
+        "desktop.h": "c",
+        "theme_man.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

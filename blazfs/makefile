@@ -5,7 +5,7 @@ compile:
 	gcc blazfs_view.c -o out/blazfs_view
 
 run:
-	./out/blazfs theme.tga theme_blue.tga
+	./out/blazfs theme.tga theme_blue.tga wpp.tga
 
 view:
 	./out/blazfs_view out/blazfs.fs

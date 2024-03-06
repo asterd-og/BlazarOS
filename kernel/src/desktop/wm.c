@@ -4,6 +4,8 @@
 #include <desktop/window.h>
 #include <video/framebuffer.h>
 #include <video/vbe.h>
+#include <video/libs/tga.h>
+#include <dev/initrd/blazfs.h>
 
 wm_theme_info* wm_theme = NULL;
 
@@ -39,9 +41,15 @@ u32 wm_cursor_data[19][11] = {
 
 u32* wm_fb_buffer = NULL;
 framebuffer_info* wm_fb = NULL;
+tga_info* wpp = NULL;
+
+bool wm_redraw = false;
+bool wm_redrawn = false;
+bool wm_moving_window = false;
 
 window_info* wm_create_window(int x, int y, int width, int height, char* title) {
     window_info* win = window_create(x, y, width, height, title);
+    win->win_idx = wm_window_list_idx;
     wm_window_list[wm_window_list_idx] = win;
     wm_window_z_order[wm_window_z_idx] = wm_window_list_idx;
     wm_window_list_idx++;
@@ -76,10 +84,19 @@ void wm_draw_mouse() {
 }
 
 void wm_update() {
+    if (wm_redraw) {
+        if (wm_redrawn) {
+            wm_redraw = false;
+            wm_redrawn = false;
+        } else {
+            fb_draw_tga(wm_fb, 0, 0, wpp);
+            wm_redrawn = true;
+        }
+    }
     for (int i = 0; i < wm_window_z_idx; i++) {
         window_info* win = wm_window_list[wm_window_z_order[i]];
-        if (win->dirty || win->fb_dirty) {
-            if (win->dirty) {
+        if (win->dirty || win->fb_dirty || wm_redraw) {
+            if (win->dirty || wm_redraw) {
                 window_draw_decorations(win);
             }
             if (win->fb_dirty) {
@@ -97,14 +114,28 @@ void wm_update() {
             win->dirty = false;
             win->fb_dirty = false;
         }
-        for (int j = 0; j < win->element_count; j++) {
-            win->elements[j]->update(win->elements[j]);
+        if (i == wm_window_z_idx - 1) {
+            for (int j = 0; j < win->element_count; j++) {
+                win->elements[j]->update(win->elements[j]);
+            }
         }
+        if (mouse_moved) window_update(win);
     }
-    if (mouse_moved) {
+    if (mouse_moved || wm_redraw) {
         wm_draw_mouse();
         vbe_swap();
         mouse_moved = false;
+    }
+}
+
+void wm_bring_to_front(u8 win_idx) {
+    for (u8 i = 0; i < wm_window_z_idx; i++) {
+        if (wm_window_z_order[i] == win_idx) {
+            if (i == wm_window_z_idx) break;
+            memcpy(wm_window_z_order + i, wm_window_z_order + (i + 1), wm_window_z_idx - i);
+            wm_window_z_order[wm_window_z_idx - 1] = win_idx;
+            break;
+        }
     }
 }
 
@@ -123,4 +154,10 @@ void wm_init() {
 
     wm_fb_buffer = (u32*)kmalloc(vbe->height * vbe->width * 4);
     wm_fb = fb_create(wm_fb_buffer, vbe->width, vbe->height, vbe->pitch);
+
+    u8* buf = kmalloc(blazfs_ftell("wpp.tga"));
+    blazfs_read("wpp.tga", buf);
+    wpp = tga_parse(buf, blazfs_ftell("wpp.tga"));
+
+    fb_draw_tga(wm_fb, 0, 0, wpp);
 }

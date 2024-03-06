@@ -1,6 +1,9 @@
 #include <desktop/window.h>
 #include <mm/heap/heap.h>
 #include <desktop/theme/theme_man.h>
+#include <desktop/rect.h>
+#include <dev/ps2/mouse.h>
+#include <lib/string/string.h>
 
 u32* win_bar_ls;
 u32* win_bar_ms;
@@ -35,11 +38,41 @@ void window_draw_decorations(window_info* win) {
     fb_draw_str(wm_fb, win->rect.x + inf->bar_ls_width, (win->rect.y - inf->bar_ls_height) + 2, 0xFF000000, win->title, kernel_font);
 }
 
+void window_update(window_info* win) {
+    theme_window_info* inf = &theme_global->window_info;
+    if (mouse_left_pressed) {
+        if (rect_colliding_coord(mouse_x, mouse_y, win->rect.x, win->rect.y - inf->bar_ms_height, win->rect.width + (inf->bar_ls_width * 2), inf->bar_ms_height)) {
+            if (!win->moving) {
+                if (wm_moving_window) return;
+                win->moving = true;
+                wm_moving_window = true;
+                win->offx = mouse_x - win->rect.x;
+                win->offy = mouse_y - win->rect.y;
+            }
+        }
+    } else {
+        if (win->moving) {
+            win->moving = false;
+            wm_moving_window = false;
+            wm_redraw = true;
+            wm_bring_to_front(win->win_idx);
+        }
+    }
+
+    if (win->moving) {
+        rectangle* rect = &win->rect;
+        rect->x = mouse_x - win->offx;
+        rect->y = mouse_y - win->offy;
+        win->dirty = true;
+    }
+}
+
 void window_add_element(window_info* win, element_info* element) {
     win->elements[win->element_count++] = (struct element_info*)element;
 }
 
 window_info* window_create(u32 x, u32 y, u32 width, u32 height, char* name) {
+    theme_window_info* inf = &theme_global->window_info;
     window_info* win = (window_info*)kmalloc(sizeof(window_info));
     win->title = (char*)kmalloc(strlen(name));
     win->title_len = strlen(name);
@@ -61,7 +94,7 @@ window_info* window_create(u32 x, u32 y, u32 width, u32 height, char* name) {
     win->element_count = 0;
 
     win->fb = fb_create(win->buffer, width, height, win->pitch);
-    fb_clear(win->fb, 0xff800080);
+    fb_clear(win->fb, 0xffeeffee);
 
     return win;
 }
