@@ -145,8 +145,8 @@ void _start(void) {
 
     blazfs_init(get_mod_addr(0));
 
-    ata_init();
-    mbr_init();
+    // ata_init();
+    // mbr_init();
 
     u64 sdt_addr = acpi_init();
     if (sdt_addr > 0) {

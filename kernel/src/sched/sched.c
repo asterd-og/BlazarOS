@@ -86,6 +86,7 @@ process* sched_new_elf(void* elf, u64 cpu_id, u8 priority) {
     proc->regs.rflags = 0x202;
 
     char* stack = (char*)kmalloc(8 * PAGE_SIZE); // 32 kb
+    proc->stack_addr = (u64)(stack);
     proc->regs.rsp = (u64)(stack + (PAGE_SIZE * 8));
 
     cpu->proc_list[cpu->proc_size] = proc;
@@ -169,8 +170,8 @@ void sched_switch(registers* regs) {
             cpu->current_proc->regs = *regs;
         }
         cpu->current_proc = cpu->proc_list[cpu->proc_idx];
-        *regs = cpu->current_proc->regs;
         vmm_switch_pm(cpu->current_proc->pm);
+        *regs = cpu->current_proc->regs;
 
         cpu->proc_idx++;
         if (cpu->proc_idx == cpu->proc_size) {

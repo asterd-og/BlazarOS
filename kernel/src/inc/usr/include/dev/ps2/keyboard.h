@@ -11,3 +11,5 @@
 
 void keyboard_init();
 char keyboard_get();
+
+extern bool keyboard_pressed;

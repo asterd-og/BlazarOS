@@ -3,13 +3,13 @@
 #include <dev/ps2/mouse.h>
 #include <desktop/theme/theme_man.h>
 
-u32* btn_ls;
-u32* btn_ms;
-u32* btn_rs;
+u32* btn_ls = NULL;
+u32* btn_ms = NULL;
+u32* btn_rs = NULL;
 
-u32* btn_pressed_ls;
-u32* btn_pressed_ms;
-u32* btn_pressed_rs;
+u32* btn_pressed_ls = NULL;
+u32* btn_pressed_ms = NULL;
+u32* btn_pressed_rs = NULL;
 
 void btn_draw(element_info* btn) {
     theme_button_info* inf = &theme_global->button_info;

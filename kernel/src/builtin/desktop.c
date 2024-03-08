@@ -12,6 +12,11 @@
 #include <dev/timer/rtc/rtc.h>
 
 #include <sched/sched.h>
+#include <dev/serial/serial.h>
+
+#include <flanterm/flanterm.h>
+
+#include <dev/initrd/blazfs.h>
 
 void desktop_task() {
     u64 frame_counter = 0;
@@ -32,11 +37,10 @@ void desktop_init() {
     btn_init();
     window_init();
 
-    window_info* win2 = wm_create_window(190, 50, 450, 250, "Terminal2");
-    window_info* win = wm_create_window(190, 150, 450, 250, "Terminal");
-    element_info* btn = btn_create(25, 25, "Buttons!!", win);
-    window_add_element(win, btn);
-
     wm_init();
     sched_new_proc(desktop_task, 1, PROC_PR_HIGH);
+    u8* elf_buf = kmalloc(blazfs_ftell("terminal"));
+    blazfs_read("terminal", elf_buf);
+    sched_new_elf(elf_buf, 1, PROC_PR_LOW);
+    sched_new_elf(elf_buf, 1, PROC_PR_LOW);
 }

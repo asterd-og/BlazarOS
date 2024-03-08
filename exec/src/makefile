@@ -16,7 +16,9 @@ LD_FLAGS = -Tlinker.ld -nostdlib
 CFILES = $(shell find -L . -type f -name '*.c')
 OBJ = $(CFILES:.c=.o)
 
-all: $(OBJ) clean
+all: clean
+	clang -static $(CFLAGS) -c terminal.c -o terminal.o
+	ld -static terminal.o ../libs/blazlib.a $(LD_FLAGS) -o ../out/terminal
 	@echo all done.
 
 %.o: %.c

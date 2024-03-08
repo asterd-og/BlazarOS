@@ -46,7 +46,9 @@
         "blazfs.h": "c",
         "hashmap.h": "c",
         "desktop.h": "c",
-        "theme_man.h": "c"
+        "theme_man.h": "c",
+        "flanterm.h": "c",
+        "font.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

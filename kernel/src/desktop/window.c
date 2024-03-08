@@ -5,16 +5,16 @@
 #include <dev/ps2/mouse.h>
 #include <lib/string/string.h>
 
-u32* win_bar_ls;
-u32* win_bar_ms;
-u32* win_bar_rs;
+u32* win_bar_ls = NULL;
+u32* win_bar_ms = NULL;
+u32* win_bar_rs = NULL;
 
-u32* win_ls;
-u32* win_rs;
+u32* win_ls = NULL;
+u32* win_rs = NULL;
 
-u32* win_bottom_ls;
-u32* win_bottom_ms;
-u32* win_bottom_rs;
+u32* win_bottom_ls = NULL;
+u32* win_bottom_ms = NULL;
+u32* win_bottom_rs = NULL;
 
 void window_draw_decorations(window_info* win) {
     theme_window_info* inf = &theme_global->window_info;
@@ -71,7 +71,7 @@ void window_add_element(window_info* win, element_info* element) {
     win->elements[win->element_count++] = (struct element_info*)element;
 }
 
-window_info* window_create(u32 x, u32 y, u32 width, u32 height, char* name) {
+window_info* window_create(u32 x, u32 y, u32 width, u32 height, const char* name) {
     theme_window_info* inf = &theme_global->window_info;
     window_info* win = (window_info*)kmalloc(sizeof(window_info));
     win->title = (char*)kmalloc(strlen(name));

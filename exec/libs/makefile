@@ -12,8 +12,14 @@ CFLAGS = -static -I../../kernel/src/inc/usr/include -m64 -ffreestanding -nostdli
     -mno-sse2 \
     -mno-red-zone
 
+override NASMFLAGS += \
+    -Wall \
+    -f elf64
+
 CFILES = $(shell find -L . -type f -name '*.c') 
+ASFILES = $(shell find -L . -type f -name '*.asm') 
 OBJS = $(CFILES:.c=.o)
+OBJS += $(ASFILES:.asm=.o)
 
 all: $(OBJS) lib
 	rm $(OBJS)
@@ -22,6 +28,12 @@ all: $(OBJS) lib
 .PHONY: lib
 lib:
 	ar rcs blazlib.a $(OBJS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+%.o: %.asm
+	nasm $(NASMFLAGS) $< -o $@
 
 clean:
 	rm $(OBJS) *.a
