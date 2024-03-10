@@ -48,7 +48,8 @@
         "desktop.h": "c",
         "theme_man.h": "c",
         "flanterm.h": "c",
-        "font.h": "c"
+        "font.h": "c",
+        "fonts_data.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

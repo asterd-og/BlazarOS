@@ -13,6 +13,7 @@ typedef struct
 } __attribute__((packed)) font_info;
 
 static const font_info FONT_SLIM_8x16   = { 8, 16, 0, 0, FONTDATA_SLIM_8x16 };
+static const font_info FONT_8x8         = { 8, 8, 0, 0,  FONTDATA_8x8 };
 
 static inline bool bit_address_from_byte(u32 to_convert, int to_return)
 {

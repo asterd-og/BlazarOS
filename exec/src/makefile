@@ -1,5 +1,5 @@
 # User controllable C flags.
-CFLAGS = -m64 -I../libs -I../../kernel/src/inc/usr/include -ffreestanding -std=gnu99 -Wall \
+CFLAGS = -m64 -I../libs -Iinc -I../../kernel/src/inc/usr/include -ffreestanding -std=gnu99 -Wall \
     -Wextra \
     -fno-stack-protector \
     -fno-stack-check \

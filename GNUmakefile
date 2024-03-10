@@ -25,6 +25,17 @@ $(eval $(call DEFAULT_VAR,HOST_LDFLAGS,$(DEFAULT_HOST_LDFLAGS)))
 override DEFAULT_HOST_LIBS :=
 $(eval $(call DEFAULT_VAR,HOST_LIBS,$(DEFAULT_HOST_LIBS)))
 
+mount_fat:
+	sudo kpartx -a fat.img
+	sudo mount /dev/mapper/loop0p1 /mnt
+
+umount_fat:
+	sudo umount /mnt
+	sudo kpartx -d fat.img
+
+remount_fat:
+	sudo mount -o remount,rw /mnt
+
 .PHONY: all
 all: $(IMAGE_NAME).iso
 

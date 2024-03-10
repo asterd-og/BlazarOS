@@ -50,13 +50,11 @@ bool wm_moving_window = false;
 
 window_info* wm_create_window(int x, int y, int width, int height, char* title) {
     window_info* win = window_create(x, y, width, height, title);
-    win->event = (wm_event*)kmalloc(sizeof(wm_event));
-    win->event->message = (wm_message*)kmalloc(sizeof(wm_message));
-    win->event->type = WM_EVENT_NONE;
-    win->event->message->type = WM_MESSAGE_NONE;
     win->win_idx = wm_window_list_idx;
+
     wm_window_list[wm_window_list_idx] = win;
     wm_window_z_order[wm_window_z_idx] = wm_window_list_idx;
+    
     wm_window_list_idx++;
     wm_window_z_idx++;
     return win;
@@ -88,8 +86,6 @@ void wm_draw_mouse() {
     }
 }
 
-char c = 0;
-
 void wm_update() {
     if (wm_redraw) {
         if (wm_redrawn) {
@@ -103,12 +99,6 @@ void wm_update() {
     for (int i = 0; i < wm_window_z_idx; i++) {
         window_info* win = wm_window_list[wm_window_z_order[i]];
         if (i == wm_window_z_idx - 1) {
-            char c = keyboard_get();
-            if (c) {
-                win->event->type = WM_EVENT_UPDATE;
-                win->event->message->type = WM_KEYBOARD_DOWN;
-                win->event->message->content = c;
-            }
             for (int j = 0; j < win->element_count; j++) {
                 win->elements[j]->update(win->elements[j]);
             }
@@ -147,11 +137,6 @@ void wm_begin_draw(window_info* win) {
 
 void wm_end_draw(window_info* win) {
     win->fb_dirty = true;
-}
-
-void wm_dispatch_event(wm_event* event) {
-    event->type = WM_EVENT_NONE;
-    event->message->type = WM_MESSAGE_NONE;
 }
 
 void wm_bring_to_front(u8 win_idx) {

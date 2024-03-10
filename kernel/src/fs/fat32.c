@@ -27,19 +27,10 @@ int fat32_read(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* buf
     u32 cluster = ((u32)entry->high_cluster_entry << 16)
                    | ((u32)entry->low_cluster_entry);
     
-    ata_read(fat32_get_sector(fs, cluster), buffer, 512);
-
-    if (entry->size > 512) {
-        for (unsigned int i = 0; i < DIV_ROUND_UP(entry->size, 512); i++) {
-            cluster = fat32_read_cluster_end(fs, cluster);
-            ata_read(fat32_get_sector(fs, cluster), buffer + ((i + 1) * 512), 512);
-        }
-    }
+    ata_read(fat32_get_sector(fs, cluster), buffer, entry->size);
 
     return 0;
 }
-
-// TODO: Handle if size is > 512 and then allocate more clusters for it!
 
 int fat32_write(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* buffer, u32 size, u16 attributes) {
     for (u32 i = 0; i < dir->file_count + 10; i++) {
@@ -58,7 +49,9 @@ int fat32_write(fat32_fs* fs, fat32_directory* dir, const char* filename, u8* bu
         entry->size = size;
 
         dir->file_count++;
+
         ata_write(fat32_get_sector(fs, cluster), buffer, size);
+
         fat32_flush_dir(dir);
         return 0;
     }

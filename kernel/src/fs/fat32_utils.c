@@ -110,18 +110,20 @@ void fat32_populate_dir(fat32_fs* fs, fat32_directory* dir) {
 u32 fat32_allocate_cluster(fat32_fs* fs) {
     if (fs->fat_info->available_cluster_num != 0xFFFFFFFF) {
         u32 ret = fs->fat_info->available_cluster_num;
-        u32 sector = fat32_get_sector(fs, fs->fat_info->available_cluster_num + 1);
+        u32 sector = fat32_get_sector(fs, ret);
         // Find next available cluster
         u8* cluster_buf = kmalloc(512);
 
         memset(cluster_buf, 0, 512);
         ata_read(sector, cluster_buf, 512);
-        fs->fat_info->available_cluster_num++;
+        
         if (cluster_buf[0] != 0x00000000) {
+            fs->fat_info->available_cluster_num++;
             while (cluster_buf[0] != 0x00000000) {
                 sector = fat32_get_sector(fs, fs->fat_info->available_cluster_num);
                 ata_read(sector, cluster_buf, 512);
                 fs->fat_info->available_cluster_num++;
+                ret++;
             }
             // Found free cluster!
         } else {
@@ -129,7 +131,7 @@ u32 fat32_allocate_cluster(fat32_fs* fs) {
         }
 
         kfree(cluster_buf);
-        ata_write(fs->ebpb->fsinfo_sector, (u8*)fs->fat_info, sizeof(fat32_info));
+        ata_write(fs->ebpb->fsinfo_sector, (u8*)fs->fat_info, 512);
 
         return ret;
     } else {
@@ -137,6 +139,7 @@ u32 fat32_allocate_cluster(fat32_fs* fs) {
         for (u32 i = 2; i < fs->fat_info->free_cluster_count; i++) {
             // TODO: Look for 0x00000000 beginning at cluster 2
         }
+        serial_printf("FAT32: Couldn't find free cluster!\n");
         return 0;
     }
 }
@@ -164,11 +167,12 @@ void fat32_flush_dir(fat32_directory* working_dir) {
 
 fat32_entry* fat32_get_entry(fat32_directory* dir, const char* name) {
     char* fname = fat32_unprocess_name(name);
-    for (u32 i = 0; i < dir->file_count; i++)
-        if (!memcmp(dir->entries[i].name, name, strlen(name))) {
+    for (u32 i = 0; i < dir->file_count; i++) {
+        if (!memcmp(dir->entries[i].name, name, 11)) {
             kfree(fname);
             return &dir->entries[i];
         }
+    }
     kfree(fname);
     return NULL;
 }

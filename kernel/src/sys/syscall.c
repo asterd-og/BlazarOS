@@ -36,15 +36,20 @@ void syscall_handler(registers* regs) {
             wm_end_draw((window_info*)regs->rdi);
             break;
         case 3:
-            wm_dispatch_event((wm_event*)regs->rdi);
-            break;
-        case 4:
             // flanterm simple init
             regs->rax = flanterm_fb_simple_init((u32*)regs->rdi, regs->rsi, regs->rdx, regs->r10);
             break;
-        case 5:
+        case 4:
             // flanterm write
             flanterm_write((struct flanterm_context*)regs->rdi, (const char*)regs->rsi, regs->rdx);
+            break;
+        case 5:
+            // key_get
+            regs->rax = fifo_pop(keyboard_fifo);
+            break;
+        case 6:
+            // key_clear
+            fifo_clear(keyboard_fifo);
             break;
     }
     unlock(&syscall_lock);

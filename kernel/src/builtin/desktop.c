@@ -42,5 +42,4 @@ void desktop_init() {
     u8* elf_buf = kmalloc(blazfs_ftell("terminal"));
     blazfs_read("terminal", elf_buf);
     sched_new_elf(elf_buf, 1, PROC_PR_LOW);
-    sched_new_elf(elf_buf, 1, PROC_PR_LOW);
 }

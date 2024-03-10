@@ -9,6 +9,10 @@
 
 #include <sched/sched.h>
 
+#include <lib/fifo.h>
+
+extern fifo* keyboard_fifo;
+
 void keyboard_init();
 char keyboard_get();
 

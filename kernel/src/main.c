@@ -1,4 +1,4 @@
-// #define FLANTERM_SCALE_DEFAULT
+#define FLANTERM_SCALE_DEFAULT
 #include <types.h>
 #include <limine.h>
 

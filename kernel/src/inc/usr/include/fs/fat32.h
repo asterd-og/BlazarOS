@@ -118,6 +118,7 @@ char* fat32_normalise_name(const char* name);
 
 u32 fat32_get_sector(fat32_fs* fs, u32 cluster);
 u32 fat32_read_cluster_end(fat32_fs* fs, u32 cluster);
+void fat32_write_cluster_end(fat32_fs* fs, u32 cluster, u32 val);
 u32 fat32_allocate_cluster(fat32_fs* fs);
 void fat32_flush_dir(fat32_directory* working_dir);
 void fat32_populate_dir(fat32_fs* fs, fat32_directory* dir);

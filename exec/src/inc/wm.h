@@ -17,7 +17,3 @@ void wm_begin_draw(window_info* win) {
 void wm_end_draw(window_info* win) {
     syscall(2, win, 0, 0, 0, 0);
 }
-
-void wm_dispatch_event(wm_event* event) {
-    syscall(3, event, 0, 0, 0, 0);
-}

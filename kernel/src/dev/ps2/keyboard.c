@@ -1,5 +1,6 @@
 #include <dev/ps2/keyboard.h>
 #include <lib/atomic.h>
+#include <desktop/wm.h>
 
 bool keyboard_pressed = false;
 bool keyboard_pressed_old = false;
@@ -7,6 +8,8 @@ bool keyboard_pressed_old = false;
 char keyboard_char = '\0';
 bool keyboard_caps = false;
 bool keyboard_shift = false;
+
+fifo* keyboard_fifo = NULL;
 
 locker_info keyboard_lock;
 
@@ -31,6 +34,7 @@ void keyboard_handle_key(u8 key) {
                 if (keyboard_shift) keyboard_char = kb_map_keys_shift[key];
                 else if (keyboard_caps) keyboard_char = kb_map_keys_caps[key];
                 else keyboard_char = kb_map_keys[key];
+                fifo_push(keyboard_fifo, keyboard_char);
             }
             break;
     }
@@ -62,5 +66,6 @@ char keyboard_get() {
 }
 
 void keyboard_init() {
+    keyboard_fifo = fifo_create(512);
     irq_register(1, keyboard_handler);
 }

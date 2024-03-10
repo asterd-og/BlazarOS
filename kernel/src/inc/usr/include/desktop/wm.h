@@ -3,6 +3,7 @@
 #include <types.h>
 #include <desktop/rect.h>
 #include <video/framebuffer.h>
+#include <lib/atomic.h>
 
 /*
 WM IDEA:
@@ -41,27 +42,6 @@ while (1) {
 
 struct element_info;
 
-enum {
-    WM_MESSAGE_NONE,
-    WM_KEYBOARD_DOWN
-};
-
-enum {
-    WM_EVENT_NONE,
-    WM_EVENT_QUIT,
-    WM_EVENT_UPDATE
-};
-
-typedef struct {
-    u8 type;
-    u8 content;
-} wm_message;
-
-typedef struct {
-    u8 type;
-    wm_message* message;
-} wm_event;
-
 typedef struct {
     rectangle rect;
     u32 offx;
@@ -82,8 +62,6 @@ typedef struct {
 
     struct element_info** elements;
     int element_count;
-
-    wm_event* event;
 } window_info;
 
 struct element_info {
@@ -120,9 +98,9 @@ void wm_draw();
 void wm_begin_draw(window_info* win);
 void wm_end_draw(window_info* win);
 
-void wm_dispatch_event(wm_event* event);
-
 void wm_bring_to_front(u8 win_idx);
+
+void wm_handle_keyboard(u8 key);
 
 extern framebuffer_info* wm_fb;
 extern rectangle wm_mouse_rect;
