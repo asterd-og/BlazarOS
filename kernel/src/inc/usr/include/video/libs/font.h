@@ -1,7 +1,6 @@
 #pragma once
 
 #include <types.h>
-#include <video/libs/fonts_data.h>
 
 typedef struct
 {
@@ -9,15 +8,16 @@ typedef struct
     u8  height;
     u8  spacing_x;
     u8  spacing_y;
-    const u8* data;
+    u8* data;
 } __attribute__((packed)) font_info;
-
-static const font_info FONT_SLIM_8x16   = { 8, 16, 0, 0, FONTDATA_SLIM_8x16 };
-static const font_info FONT_8x8         = { 8, 8, 0, 0,  FONTDATA_8x8 };
 
 static inline bool bit_address_from_byte(u32 to_convert, int to_return)
 {
     int mask = 1 << (to_return - 1);
     return ((to_convert & mask) != 0);
 }
-#define kernel_font FONT_SLIM_8x16
+
+void font_init();
+font_info* font_get(u8 idx);
+
+#define kernel_font *font_get(0)

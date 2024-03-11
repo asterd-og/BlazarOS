@@ -4,6 +4,7 @@
 #include <wm.h>
 #include <flanterm.h>
 #include <key.h>
+#include <fb.h>
 
 window_info* win;
 struct flanterm_context* ft_ctx;
@@ -42,13 +43,14 @@ int main() {
     ft_ctx = flanterm_simple_init(win->fb->buffer, win->rect.width, win->rect.height, win->rect.width * 4);
 
     wm_begin_draw(win);
+    
     for (int i = 0; i < win->rect.width * win->rect.height; i++) {
         win->fb->buffer[i] = 0;
     }
-
     flanterm_write(ft_ctx, "A:/> ", 5);
 
     wm_end_draw(win);
+
     char c = 0;
     bool has_data = false;
     while (true) {

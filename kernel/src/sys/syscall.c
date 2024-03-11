@@ -51,6 +51,10 @@ void syscall_handler(registers* regs) {
             // key_clear
             wm_clear_key((window_info*)regs->rdi);
             break;
+        case 7:
+            // font_get
+            regs->rax = font_get(regs->rdi);
+            break;
     }
     unlock(&syscall_lock);
 }

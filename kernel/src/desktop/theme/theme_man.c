@@ -4,8 +4,8 @@
 #include <mm/heap/heap.h>
 #include <desktop/rect.h>
 
-tga_info* theme_tga;
-theme_info* theme_global;
+tga_info* theme_tga = NULL;
+theme_info* theme_global = NULL;
 
 void theme_crop_rect_into(u32 x, u32 y, u32 w, u32 h, u32 to_w, u32* from, u32* to) {
     for (u32 xx = 0; xx < w; xx++) {

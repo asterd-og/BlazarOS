@@ -16,9 +16,9 @@ u8 wm_window_list_idx = 0;
 u8 wm_window_z_order[128];
 u8 wm_window_z_idx = 0;
 
-rectangle wm_mouse_rect;
+rectangle wm_mouse_rect = {.x = 0, .y = 0, .width = 1, .height = 1};
 
-u8 wm_cursor[3][13][11] = {
+u8 wm_cursor[4][13][11] = {
     // Normal cursor
     {
         {1,1,0,0,0,0,0,0,0,0,0},
@@ -49,6 +49,36 @@ u8 wm_cursor[3][13][11] = {
         {0,1,2,2,2,2,2,2,2,1,0},
         {0,0,1,2,2,2,2,2,1,0,0},
         {0,0,0,1,1,1,1,1,0,0,0},
+    },
+    {
+        {0,0,0,1,0,0,0,0,0,0,0},
+        {0,0,1,2,1,0,0,0,0,0,0},
+        {0,0,1,2,1,0,0,0,0,0,0},
+        {0,0,1,2,1,0,0,0,0,0,0},
+        {0,1,1,2,1,1,1,1,0,0,0},
+        {1,2,1,2,1,2,1,2,1,0,0},
+        {1,2,1,2,1,2,1,2,2,1,0},
+        {1,2,1,2,2,2,2,2,2,2,1},
+        {1,2,1,2,2,2,2,2,2,2,1},
+        {0,1,2,2,2,2,2,2,2,1,0},
+        {0,1,2,2,2,2,2,2,2,1,0},
+        {0,0,1,2,2,2,2,2,1,0,0},
+        {0,0,0,1,1,1,1,1,0,0,0},
+    },
+    {
+        {0,0,0,1,1,1,1,1,0,0,0},
+        {0,0,0,1,2,2,2,1,0,0,0},
+        {0,0,0,0,1,2,1,0,0,0,0},
+        {0,0,0,0,1,2,1,0,0,0,0},
+        {0,0,0,0,1,2,1,0,0,0,0},
+        {0,0,0,0,1,2,1,0,0,0,0},
+        {0,0,0,0,1,2,1,0,0,0,0},
+        {0,0,0,0,1,2,1,0,0,0,0},
+        {0,0,0,0,1,2,1,0,0,0,0},
+        {0,0,0,0,1,2,1,0,0,0,0},
+        {0,0,0,0,1,2,1,0,0,0,0},
+        {0,0,0,1,2,2,2,1,0,0,0},
+        {0,0,0,1,1,1,1,1,0,0,0},
     }
 };
 
@@ -56,11 +86,11 @@ u32* wm_fb_buffer = NULL;
 framebuffer_info* wm_fb = NULL;
 tga_info* wpp = NULL;
 
-bool wm_redraw = false;
+bool wm_redraw = true;
 bool wm_redrawn = false;
 bool wm_moving_window = false;
 
-u8 wm_cursor_state = WM_CURSOR_NORMAL;
+u8 wm_cursor_state = 0;
 
 window_info* wm_create_window(int x, int y, int width, int height, char* title) {
     window_info* win = window_create(x, y, width, height, title);
@@ -110,37 +140,46 @@ void wm_update() {
             wm_redrawn = true;
         }
     }
+
     for (int i = 0; i < wm_window_z_idx; i++) {
         window_info* win = wm_window_list[wm_window_z_order[i]];
+        if (mouse_moved) {
+            window_update(win);
+        }
         if (i == wm_window_z_idx - 1) {
             for (int j = 0; j < win->element_count; j++) {
                 win->elements[j]->update(win->elements[j]);
             }
-        }
-        if (win->dirty || win->fb_dirty || wm_redraw) {
-            if (win->dirty || wm_redraw) {
-                window_draw_decorations(win);
-            }
-            if (win->fb_dirty) {
-                for (int j = 0; j < win->element_count; j++) {
-                    if (win->elements[j]->dirty) {
-                        win->elements[j]->draw(win->elements[j]);
-                        win->elements[j]->dirty = false;
+            if (win->dirty || win->fb_dirty || wm_redraw) {
+                if (win->dirty || wm_redraw) {
+                    window_draw_decorations(win);
+                }
+                if (win->fb_dirty) {
+                    for (int j = 0; j < win->element_count; j++) {
+                        if (win->elements[j]->dirty) {
+                            win->elements[j]->draw(win->elements[j]);
+                            win->elements[j]->dirty = false;
+                        }
                     }
                 }
+                fb_blit_fb(wm_fb, win->fb, win->rect.x, win->rect.y);
+                fb_blit_fb(vbe, wm_fb, 0, 0);
+                wm_draw_mouse();
+                vbe_swap();
+                win->dirty = false;
+                win->fb_dirty = false;
             }
-            fb_blit_fb(wm_fb, win->fb, win->rect.x, win->rect.y);
-            fb_blit_fb(vbe, wm_fb, 0, 0);
-            wm_draw_mouse();
-            vbe_swap();
-            win->dirty = false;
-            win->fb_dirty = false;
-        }
-        if (mouse_moved) {
-            window_update(win);
-            mouse_moved = false;
+        } else {
+            if (wm_redraw) {
+                window_draw_decorations(win);
+                fb_blit_fb(wm_fb, win->fb, win->rect.x, win->rect.y);
+            }
         }
     }
+    if (mouse_moved) {
+        mouse_moved = false;
+    }
+
     if (wm_redraw) wm_mouse_task();
 }
 

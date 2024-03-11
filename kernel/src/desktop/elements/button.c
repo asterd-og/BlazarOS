@@ -37,7 +37,8 @@ void btn_draw(element_info* btn) {
 
 void btn_update(element_info* btn) {
     button_info* btn_info = (button_info*)btn->data;
-    bool clicked = (rect_colliding_coord(wm_mouse_rect.x, wm_mouse_rect.y, btn->rect.x + btn->parent->rect.x, btn->rect.y + btn->parent->rect.y, btn->rect.width, btn->rect.height) && mouse_left_pressed);
+    bool colliding = rect_colliding_coord(wm_mouse_rect.x, wm_mouse_rect.y, btn->rect.x + btn->parent->rect.x, btn->rect.y + btn->parent->rect.y, btn->rect.width, btn->rect.height);
+    bool clicked = (colliding && mouse_left_pressed);
     if (clicked && !btn_info->pressed) {
         btn_info->pressed = true;
         btn->dirty = true;

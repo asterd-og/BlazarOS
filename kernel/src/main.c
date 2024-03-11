@@ -127,21 +127,21 @@ void _start(void) {
     );
     
     serial_init();
-    serial_printf("Serial Initialised.\n");
+    log_info("Serial Initialised.\n");
 
     gdt_init();
-    serial_printf("GDT Initialised.\n");
+    log_info("GDT Initialised.\n");
 
     idt_init();
-    serial_printf("IDT Initialised.\n");
+    log_info("IDT Initialised.\n");
 
     log_info("HHDM is %lx\n", hhdm_offset);
 
     pmm_init();
-    serial_printf("PMM Initialised.\n");
+    log_info("PMM Initialised.\n");
 
     vmm_init();
-    serial_printf("VMM Initialised.\n");
+    log_info("VMM Initialised.\n");
 
     blazfs_init(get_mod_addr(0));
 
@@ -150,7 +150,7 @@ void _start(void) {
 
     u64 sdt_addr = acpi_init();
     if (sdt_addr > 0) {
-        serial_printf("ACPI: SDT found at %lx.\n", sdt_addr);
+        log_info("ACPI: SDT found at %lx.\n", sdt_addr);
     } else {
         panic("ACPI: Couldn't find SDT/Bad SDP. %d.\n", sdt_addr);
         for (;;) ;
@@ -158,26 +158,30 @@ void _start(void) {
 
     madt_init();
     lapic_init();
-    serial_printf("LAPIC Initialised.\n");
+    log_info("LAPIC Initialised.\n");
 
     ioapic_init();
     pic_disable();
-    serial_printf("IO/APIC Initialised.\n");
+    log_info("IO/APIC Initialised.\n");
 
     log_info("CPU 0 lapic id: %x\n", lapic_get_id());
     smp_init();
 
-    serial_printf("SMP Initialised.\n");
+    log_info("SMP Initialised.\n");
+    font_init();
 
     vbe_init(framebuffer);
+    log_info("VBE Initialised.\n");
 
     keyboard_init();
     mouse_init();
 
     hpet_init();
+    log_info("HPET Initialised.\n");
 
     sched_init();
     desktop_init();
+    log_info("Desktop Initialised.\n");
     irq_register(SCHED_INT_VEC - 32, sched_switch);
 
     // We're done, just hang...
