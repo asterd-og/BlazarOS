@@ -5,41 +5,6 @@
 #include <video/framebuffer.h>
 #include <lib/atomic.h>
 
-/*
-WM IDEA:
-
-void window_handle(wm_message* msg) {
-    switch (msg->type) {
-        case WM_KEYBOARD_DOWN:
-            printf("%c", msg->content);
-            break;
-        case WM_MOUSE_DOWN:
-            printf("Mouse down! %s button\n", (msg->content == 1 ? "left" : "right"));
-            break;
-    }
-}
-
-window_info* win = wm_create_window(x, y, w, h, name);
-event_info* event = win->event;
-
-element_info* button = wm_create_element(WM_BUTTON, x, y, w, h, contents);
-// elemnts can also have events
-
-window_add_element(win, button);
-
-while (1) {
-    switch (event->type) {
-        case WM_QUIT:
-            // Free all the objects that we needa free
-            return 0;
-        case WM_UPDATE:
-            update(win, event); // Mouse/Keyboard event(possibly?)
-            break;
-    }
-}
-
-*/
-
 struct element_info;
 
 typedef struct {
@@ -100,7 +65,15 @@ void wm_end_draw(window_info* win);
 
 void wm_bring_to_front(u8 win_idx);
 
-void wm_handle_keyboard(u8 key);
+char wm_get_key(window_info* win);
+void wm_clear_key(window_info* win);
+
+void wm_mouse_task();
+
+enum {
+    WM_CURSOR_NORMAL,
+    WM_CURSOR_DRAGGING
+};
 
 extern framebuffer_info* wm_fb;
 extern rectangle wm_mouse_rect;
@@ -110,3 +83,4 @@ extern u8 wm_window_list_idx;
 extern bool wm_redraw;
 extern u8 wm_window_z_order[128];
 extern bool wm_moving_window;
+extern u8 wm_cursor_state;

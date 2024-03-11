@@ -1,4 +1,4 @@
-#define FLANTERM_SCALE_DEFAULT
+// #define FLANTERM_SCALE_DEFAULT
 #include <types.h>
 #include <limine.h>
 
@@ -169,10 +169,10 @@ void _start(void) {
 
     serial_printf("SMP Initialised.\n");
 
-    mouse_init();
-    keyboard_init();
-
     vbe_init(framebuffer);
+
+    keyboard_init();
+    mouse_init();
 
     hpet_init();
 

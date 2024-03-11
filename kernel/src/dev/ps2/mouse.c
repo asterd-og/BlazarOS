@@ -1,25 +1,34 @@
 #include <dev/ps2/mouse.h>
+#include <lib/atomic.h>
 
 u8 mouse_state = 0;
-u8 mouse_bytes[3] = {0, 0, 0};
+u8 mouse_flags = 0;
+i32 mouse_bytes[2] = {0, 0};
 
 u32 mouse_x = 0;
 u32 mouse_y = 0;
-
-i32 mouse_wrap_x = 0;
-i32 mouse_wrap_y = 0;
 
 bool mouse_left_pressed = false;
 bool mouse_right_pressed = false;
 
 bool mouse_moved = false;
 
-void mouse_wait_write() {
-    while ((inb(0x64) & 2) != 0) {;}
+static inline void mouse_wait_write() {
+    int timeout = 100000;
+    while (timeout--) {
+        if ((inb(0x64) & 2) == 0) {
+            return;
+        }
+    }
 }
 
-void mouse_wait_read() {
-    while ((inb(0x64) & 1) != 1) {;}
+static inline void mouse_wait_read() {
+    int timeout = 100000;
+    while (timeout--) {
+        if ((inb(0x64) & 1) == 1) {
+            return;
+        }
+    }
 }
 
 void mouse_write(u8 value) {
@@ -34,74 +43,60 @@ u8 mouse_read() {
     return inb(0x60);
 }
 
-void mouse_update(i8 accel_x, i8 accel_y) {
-    if (mouse_wrap_x + accel_x <= 0) { mouse_wrap_x = 0; }
-    else {
-        mouse_wrap_x += accel_x;
-    }
-    if (mouse_wrap_y - accel_y <= 0) { mouse_wrap_y = 0; }
-    else {
-        mouse_wrap_y -= accel_y;
-    }
-    if (mouse_wrap_x + accel_x > (i32)vbe->width) { mouse_wrap_x = vbe->width; }
-    if (mouse_wrap_y - accel_y > (i32)vbe->height) { mouse_wrap_y = vbe->height; }
-
-    mouse_x = (u32)mouse_wrap_x;
-    mouse_y = (u32)mouse_wrap_y;
-}
+bool discard_packet = false;
+locker_info mouse_lock;
 
 void mouse_handler(registers* regs) {
     (void)regs;
-    u8 byte = inb(0x64);
-    if ((!(byte & 1)) == 1) { mouse_state = 0; return; }
-    if ((!(byte & 2)) == 0) { mouse_state = 0; return; }
-    if (!(byte & 0x20)) { mouse_state = 0; return; }
+    lock(&mouse_lock);
     switch (mouse_state) {
         // Packet state
         case 0:
-            mouse_wait_read();
+            mouse_flags = mouse_read();
+            mouse_state++;
+            if (mouse_flags & (1 << 6) || mouse_flags & (1 << 7))
+                discard_packet = true;
+            if (!(mouse_flags & (1 << 3)))
+                discard_packet = true;
+            break;
+        case 1:
             mouse_bytes[0] = mouse_read();
             mouse_state++;
             break;
-        case 1:
-            mouse_wait_read();
-            mouse_bytes[1] = mouse_read();
-            mouse_state++;
-            break;
         case 2:
-            mouse_wait_read();
-            mouse_bytes[2] = mouse_read();
-            
-            if (mouse_bytes[0] & 0x80 || mouse_bytes[0] & 0x40) return;
-
-            mouse_update(mouse_bytes[1], mouse_bytes[2]);
-
-            mouse_left_pressed = (bool)(mouse_bytes[0] & 0b00000001);
-            mouse_right_pressed = (bool)((mouse_bytes[0] & 0b00000010) >> 1);
-
+            mouse_bytes[1] = mouse_read();
             mouse_state = 0;
-            mouse_moved = true;
+
+            if (!discard_packet) {
+                if (mouse_flags & (1 << 4))
+                    mouse_bytes[0] = (i8)(u8)mouse_bytes[0];
+                if (mouse_flags & (1 << 5))
+                    mouse_bytes[1] = (i8)(u8)mouse_bytes[1];
+                
+                mouse_x = mouse_x + (mouse_bytes[0]);
+                mouse_y = mouse_y - (mouse_bytes[1]);
+
+                if (mouse_x <= 1) mouse_x = 1;
+                if (mouse_y <= 1) mouse_y = 1;
+                if (mouse_x > vbe->width - 1) mouse_x = vbe->width - 1;
+                if (mouse_y > vbe->height - 1) mouse_y = vbe->height - 1;
+
+                mouse_moved = true;
+                wm_mouse_task();
+                mouse_left_pressed = (bool)(mouse_flags & 0b00000001);
+                mouse_right_pressed = (bool)((mouse_flags & 0b00000010) >> 1);
+            } else {
+                discard_packet = false;
+            }
             break;
     }
+    unlock(&mouse_lock);
 }
 
 void mouse_init() {
-    u8 data;
-    mouse_wait_write();
-    outb(0x64, 0xa8);
-    mouse_wait_write();
-    outb(0x64, 0x20);
-
-    mouse_read();
-    data = (inb(0x60) | 2);
-
-    mouse_wait_write();
-    outb(0x64, 0x60);
-    mouse_wait_write();
-    outb(0x60, data);
-
     mouse_write(0xf6);
     mouse_read();
+
     mouse_write(0xf4);
     mouse_read();
 

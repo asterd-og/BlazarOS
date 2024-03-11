@@ -48,14 +48,17 @@ void window_update(window_info* win) {
                 wm_moving_window = true;
                 win->offx = mouse_x - win->rect.x;
                 win->offy = mouse_y - win->rect.y;
+                wm_cursor_state = WM_CURSOR_DRAGGING;
             }
         }
     } else {
         if (win->moving) {
             win->moving = false;
+            win->dirty = true;
             wm_moving_window = false;
             wm_redraw = true;
             wm_bring_to_front(win->win_idx);
+            wm_cursor_state = WM_CURSOR_NORMAL;
         }
     }
 
@@ -63,7 +66,6 @@ void window_update(window_info* win) {
         rectangle* rect = &win->rect;
         rect->x = mouse_x - win->offx;
         rect->y = mouse_y - win->offy;
-        win->dirty = true;
     }
 }
 

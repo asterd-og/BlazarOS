@@ -59,10 +59,18 @@ void fb_draw_outline(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 color
 void fb_draw_tga(framebuffer_info* fb, u32 x, u32 y, tga_info* tga) {
     u32 scr_off = y * fb->pitch / 4 + x;
     u32 buf_off = 0;
-    for (u32 yy = 0; yy < tga->height; yy++) {
-        memcpy(fb->buffer + scr_off, tga->data + buf_off, tga->width * 4);
-        buf_off += tga->width;
-        scr_off += fb->width;
+    if (y + tga->height > fb->height) {
+        for (u32 yy = y; yy < fb->height; yy++) {
+            memcpy(fb->buffer + scr_off, tga->data + buf_off, tga->width * 4);
+            buf_off += tga->width;
+            scr_off += fb->width;
+        }
+    } else {
+        for (u32 yy = 0; yy < tga->height; yy++) {
+            memcpy(fb->buffer + scr_off, tga->data + buf_off, tga->width * 4);
+            buf_off += tga->width;
+            scr_off += fb->width;
+        }
     }
 }
 
@@ -78,10 +86,18 @@ void fb_draw_fake_alpha_tga(framebuffer_info* fb, u32 x, u32 y, u32 alpha, tga_i
 void fb_draw_buffer(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32* buf) {
     u32 scr_off = y * fb->pitch / 4 + x;
     u32 buf_off = 0;
-    for (u32 yy = 0; yy < h; yy++) {
-        memcpy(fb->buffer + scr_off, buf + buf_off, w * 4);
-        buf_off += w;
-        scr_off += fb->width;
+    if (y + h > fb->height) {
+        for (u32 yy = y; yy < fb->height; yy++) {
+            memcpy(fb->buffer + scr_off, buf + buf_off, w * 4);
+            buf_off += w;
+            scr_off += fb->width;
+        }
+    } else {
+        for (u32 yy = 0; yy < h; yy++) {
+            memcpy(fb->buffer + scr_off, buf + buf_off, w * 4);
+            buf_off += w;
+            scr_off += fb->width;
+        }
     }
 }
 
@@ -97,10 +113,18 @@ void fb_draw_fake_alpha_buffer(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h,
 void fb_blit_fb(framebuffer_info* to, framebuffer_info* from, u32 x, u32 y) {
     u32 scr_off = y * to->pitch / 4 + x;
     u32 buf_off = 0;
-    for (u32 yy = 0; yy < from->height; yy++) {
-        memcpy(to->buffer + scr_off, from->buffer + buf_off, from->width * 4);
-        buf_off += from->width;
-        scr_off += to->width;
+    if (y + from->height > to->height) {
+        for (u32 yy = y; yy < to->height; yy++) {
+            memcpy(to->buffer + scr_off, from->buffer + buf_off, from->width * 4);
+            buf_off += from->width;
+            scr_off += to->width;
+        }
+    } else {
+        for (u32 yy = 0; yy < from->height; yy++) {
+            memcpy(to->buffer + scr_off, from->buffer + buf_off, from->width * 4);
+            buf_off += from->width;
+            scr_off += to->width;
+        }
     }
 }
 

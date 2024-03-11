@@ -45,11 +45,11 @@ void syscall_handler(registers* regs) {
             break;
         case 5:
             // key_get
-            regs->rax = fifo_pop(keyboard_fifo);
+            regs->rax = wm_get_key((window_info*)regs->rdi);
             break;
         case 6:
             // key_clear
-            fifo_clear(keyboard_fifo);
+            wm_clear_key((window_info*)regs->rdi);
             break;
     }
     unlock(&syscall_lock);

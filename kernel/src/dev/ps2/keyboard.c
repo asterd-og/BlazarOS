@@ -65,7 +65,48 @@ char keyboard_get() {
     return c;
 }
 
+// This part and mouse's handler is from lyreOS
+// I got it from them because I thought a mouse bug was a bug in my code
+// But turns out it was in qemu's version (mine was older)
+// And now I'm too lazy to change back!
+
+u8 keyboard_read() {
+    while ((inb(0x64) & 1) == 0);
+    return inb(0x60);
+}
+
+void keyboard_write(u16 port, u8 val) {
+    while ((inb(0x64) & 2) != 0);
+    outb(port, val);
+}
+
+u8 keyboard_read_cfg() {
+    keyboard_write(0x64, 0x20);
+    return keyboard_read();
+}
+
+void keyboard_write_cfg(u8 cfg) {
+    keyboard_write(0x64, 0x60);
+    keyboard_write(0x60, cfg);
+}
+
 void keyboard_init() {
+    keyboard_write(0x64, 0xad);
+    keyboard_write(0x64, 0xa7);
+
+    u8 cfg = keyboard_read_cfg();
+    cfg |= (1 << 0) | (1 << 6);
+    if ((cfg & (1 << 5)) != 0) {
+        cfg |= (1 << 1);
+    }
+    keyboard_write_cfg(cfg);
+
+    keyboard_write(0x64, 0xae);
+    if ((cfg & (1 << 5)) != 0) {
+        keyboard_write(0x64, 0xa8);
+    }
+
     keyboard_fifo = fifo_create(512);
     irq_register(1, keyboard_handler);
+    inb(0x60);
 }

@@ -52,13 +52,13 @@ int main() {
     char c = 0;
     bool has_data = false;
     while (true) {
-        c = key_get();
+        c = key_get(win);
         if (c != 0) {
             has_data = true;
             terminal_handle(c);
         } else {
             if (has_data) {
-                key_clear();
+                key_clear(win);
                 has_data = false;
             }
         }

@@ -18,26 +18,38 @@ u8 wm_window_z_idx = 0;
 
 rectangle wm_mouse_rect;
 
-u32 wm_cursor_data[19][11] = {
-    {1,0,0,0,0,0,0,0,0,0,0},
-    {1,1,0,0,0,0,0,0,0,0,0},
-    {1,2,1,0,0,0,0,0,0,0,0},
-    {1,2,2,1,0,0,0,0,0,0,0},
-    {1,2,2,2,1,0,0,0,0,0,0},
-    {1,2,2,2,2,1,0,0,0,0,0},
-    {1,2,2,2,2,2,1,0,0,0,0},
-    {1,2,2,2,2,2,2,1,0,0,0},
-    {1,2,2,2,2,2,2,2,1,0,0},
-    {1,2,2,2,2,2,2,2,2,1,0},
-    {1,2,2,2,2,2,1,1,1,1,1},
-    {1,2,2,1,2,2,1,0,0,0,0},
-    {1,2,1,0,1,2,2,1,0,0,0},
-    {1,1,0,0,1,2,2,1,0,0,0},
-    {1,0,0,0,0,1,2,2,1,0,0},
-    {0,0,0,0,0,1,2,2,1,0,0},
-    {0,0,0,0,0,0,1,2,2,1,0},
-    {0,0,0,0,0,0,1,2,2,1,0},
-    {0,0,0,0,0,0,0,1,1,0,0},
+u8 wm_cursor[3][13][11] = {
+    // Normal cursor
+    {
+        {1,1,0,0,0,0,0,0,0,0,0},
+        {1,2,1,0,0,0,0,0,0,0,0},
+        {1,2,2,1,0,0,0,0,0,0,0},
+        {1,2,2,2,1,0,0,0,0,0,0},
+        {1,2,2,2,2,1,0,0,0,0,0},
+        {1,2,2,2,2,2,1,0,0,0,0},
+        {1,2,2,2,2,2,1,0,0,0,0},
+        {1,1,1,2,1,1,1,0,0,0,0},
+        {0,0,1,2,2,1,0,0,0,0,0},
+        {0,0,0,1,2,2,1,0,0,0,0},
+        {0,0,0,0,1,2,2,1,0,0,0},
+        {0,0,0,0,0,1,1,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0},
+    },
+    {
+        {0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,1,1,1,1,1,0,0,0},
+        {0,0,1,2,1,2,1,2,1,0,0},
+        {0,1,1,2,1,2,1,2,2,1,0},
+        {1,2,1,2,2,2,2,2,2,2,1},
+        {1,2,1,2,2,2,2,2,2,2,1},
+        {0,1,2,2,2,2,2,2,2,1,0},
+        {0,1,2,2,2,2,2,2,2,1,0},
+        {0,0,1,2,2,2,2,2,1,0,0},
+        {0,0,0,1,1,1,1,1,0,0,0},
+    }
 };
 
 u32* wm_fb_buffer = NULL;
@@ -47,6 +59,8 @@ tga_info* wpp = NULL;
 bool wm_redraw = false;
 bool wm_redrawn = false;
 bool wm_moving_window = false;
+
+u8 wm_cursor_state = WM_CURSOR_NORMAL;
 
 window_info* wm_create_window(int x, int y, int width, int height, char* title) {
     window_info* win = window_create(x, y, width, height, title);
@@ -61,7 +75,7 @@ window_info* wm_create_window(int x, int y, int width, int height, char* title) 
 }
 
 void wm_draw_mouse() {
-    for (u32 y = 0; y < 19; y++) {
+    for (u32 y = 0; y < 13; y++) {
         for (u32 x = 0; x < 11; x++) {
             fb_set_pixel(vbe, wm_mouse_rect.x + x, wm_mouse_rect.y + y, fb_get_pixel(wm_fb, wm_mouse_rect.x + x, wm_mouse_rect.y + y));
         }
@@ -70,9 +84,9 @@ void wm_draw_mouse() {
     wm_mouse_rect.x = mouse_x;
     wm_mouse_rect.y = mouse_y;
 
-    for (u32 y = 0; y < 19; y++) {
+    for (u32 y = 0; y < 13; y++) {
         for (u32 x = 0; x < 11; x++) {
-            switch (wm_cursor_data[y][x]) {
+            switch (wm_cursor[wm_cursor_state][y][x]) {
                 case 1:
                     fb_set_pixel(vbe, x + mouse_x, y + mouse_y, wm_theme->mouse_outline);
                     break;
@@ -122,13 +136,17 @@ void wm_update() {
             win->dirty = false;
             win->fb_dirty = false;
         }
-        if (mouse_moved) window_update(win);
+        if (mouse_moved) {
+            window_update(win);
+            mouse_moved = false;
+        }
     }
-    if (mouse_moved || wm_redraw) {
-        wm_draw_mouse();
-        vbe_swap();
-        mouse_moved = false;
-    }
+    if (wm_redraw) wm_mouse_task();
+}
+
+void wm_mouse_task() {
+    wm_draw_mouse();
+    vbe_swap();
 }
 
 void wm_begin_draw(window_info* win) {
@@ -147,6 +165,19 @@ void wm_bring_to_front(u8 win_idx) {
             wm_window_z_order[wm_window_z_idx - 1] = win_idx;
             break;
         }
+    }
+}
+
+char wm_get_key(window_info* win) {
+    if (win->win_idx == wm_window_z_order[wm_window_z_idx - 1]) {
+        return fifo_pop(keyboard_fifo);
+    }
+    return 0;
+}
+
+void wm_clear_key(window_info* win) {
+    if (win->win_idx == wm_window_z_order[wm_window_z_idx - 1]) {
+        fifo_clear(keyboard_fifo);
     }
 }
 
