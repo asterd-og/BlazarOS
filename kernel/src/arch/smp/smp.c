@@ -45,7 +45,7 @@ void smp_init_cpu(struct limine_smp_info* smp_info) {
     smp_cpu_started++;
 
     while (true) {
-        __asm__ volatile ("nop");
+        __asm__ volatile ("hlt");
     }
 }
 

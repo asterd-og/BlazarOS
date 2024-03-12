@@ -176,8 +176,14 @@ void _start(void) {
     keyboard_init();
     mouse_init();
 
-    hpet_init();
-    log_info("HPET Initialised.\n");
+    int hpet_off = hpet_init();
+    if (hpet_off) {
+        log_info("HPET Couldn't be found! Using PIT instead.\n");
+        pit_init();
+        log_info("PIT Initialised.\n");
+    } else {
+        log_info("HPET Initialised.\n");
+    }
 
     sched_init();
     desktop_init();

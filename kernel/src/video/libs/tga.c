@@ -4,8 +4,8 @@
 // Scary osdev.wiki type code.
 
 tga_info* tga_parse(u8* ptr, u32 size) {
-    u32 *data;
-    int i, j, k, x, y, w = (ptr[13] << 8) + ptr[12], h = (ptr[15] << 8) + ptr[14], o = (ptr[11] << 8) + ptr[10];
+    u32 *data = NULL;
+    int i = 0, j = 0, k = 0, x = 0, y = 0, w = (ptr[13] << 8) + ptr[12], h = (ptr[15] << 8) + ptr[14], o = (ptr[11] << 8) + ptr[10];
     u32 m = ((ptr[1]? (ptr[7]>>3)*ptr[5] : 0) + 18);
  
     if(w<1 || h<1) return NULL;

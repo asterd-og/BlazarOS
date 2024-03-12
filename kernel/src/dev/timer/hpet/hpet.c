@@ -43,8 +43,9 @@ void hpet_handler(registers* regs) {
     }
 }
 
-void hpet_init() {
+int hpet_init() {
     hpet = (hpet_info*)acpi_find_table("HPET");
+    if (hpet == NULL) return 1;
 
     hpet_clear_bits(HPET_CONFIG, 1 << 1);
 
@@ -69,4 +70,5 @@ void hpet_init() {
     hpet_write(hpet_timer_comp_reg(0), hpet_comp_update); // enable
 
     hpet_write_bits(HPET_CONFIG, 1 << 0 | 1 << 1);
+    return 0;
 }

@@ -37,4 +37,4 @@ typedef struct {
     u8 page_prot;
 } __attribute__((packed)) hpet_info;
 
-void hpet_init();
+int hpet_init();

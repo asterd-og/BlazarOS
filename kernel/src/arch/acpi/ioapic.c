@@ -92,7 +92,7 @@ void ioapic_init() {
     u32 count = ((val >> 16) & 0xFF);
 
     if ((ioapic_read(ioapic, 0) >> 24) != ioapic->apic_id) {
-        log_bad("IOAPIC: Not the MP!\n");
+        log_bad("IOAPIC: Not setting it up from the MP!\n");
     }
 
     for (u32 i = 0; i <= count; ++i) {

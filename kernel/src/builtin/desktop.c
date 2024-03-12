@@ -39,7 +39,7 @@ void desktop_init() {
 
     wm_init();
     sched_new_proc(desktop_task, 0, PROC_PR_HIGH);
-    u8* elf_buf = kmalloc(blazfs_ftell("terminal"));
-    blazfs_read("terminal", elf_buf);
-    sched_new_elf(elf_buf, 1, PROC_PR_HIGH);
+    // u8* elf_buf = kmalloc(blazfs_ftell("terminal"));
+    // blazfs_read("terminal", elf_buf);
+    // sched_new_elf(elf_buf, 1, PROC_PR_HIGH);
 }

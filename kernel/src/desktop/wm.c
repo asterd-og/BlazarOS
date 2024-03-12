@@ -137,6 +137,7 @@ void wm_update() {
             wm_redrawn = false;
         } else {
             fb_draw_tga(wm_fb, 0, 0, wpp);
+            fb_blit_fb(vbe, wm_fb, 0, 0);
             wm_redrawn = true;
         }
     }
@@ -164,8 +165,8 @@ void wm_update() {
                 }
                 fb_blit_fb(wm_fb, win->fb, win->rect.x, win->rect.y);
                 fb_blit_fb(vbe, wm_fb, 0, 0);
-                wm_draw_mouse();
                 vbe_swap();
+                wm_draw_mouse();
                 win->dirty = false;
                 win->fb_dirty = false;
             }
