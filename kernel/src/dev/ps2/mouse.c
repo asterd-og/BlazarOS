@@ -5,8 +5,8 @@ u8 mouse_state = 0;
 u8 mouse_flags = 0;
 i32 mouse_bytes[2] = {0, 0};
 
-u32 mouse_x = 0;
-u32 mouse_y = 0;
+u32 mouse_x = 20;
+u32 mouse_y = 20;
 
 bool mouse_left_pressed = false;
 bool mouse_right_pressed = false;
@@ -46,6 +46,9 @@ u8 mouse_read() {
 bool discard_packet = false;
 locker_info mouse_lock;
 
+i32 mouse_wrap_x = 20;
+i32 mouse_wrap_y = 20;
+
 void mouse_handler(registers* regs) {
     (void)regs;
     lock(&mouse_lock);
@@ -76,10 +79,10 @@ void mouse_handler(registers* regs) {
                 mouse_x = mouse_x + (mouse_bytes[0]);
                 mouse_y = mouse_y - (mouse_bytes[1]);
 
-                if (mouse_x <= 1) mouse_x = 1;
-                if (mouse_y <= 1) mouse_y = 1;
-                if (mouse_x > vbe->width - 1) mouse_x = vbe->width - 1;
-                if (mouse_y > vbe->height - 1) mouse_y = vbe->height - 1;
+                if ((i32)mouse_x <= 1) mouse_x = 1;
+                if ((i32)mouse_y <= 1) mouse_y = 1;
+                if ((i32)mouse_x >= vbe->width - 1) mouse_x = vbe->width - 1;
+                if ((i32)mouse_y >= vbe->height - 1) mouse_y = vbe->height - 1;
 
                 mouse_moved = true;
                 wm_mouse_task();

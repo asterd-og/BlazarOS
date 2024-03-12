@@ -33,13 +33,13 @@ BlazarOS is a hobby operating system built for the x86_64 architecture. Here are
         - [ ] HTTP
 - [x] FAT32 Driver
     - [x] Read operations
-    - [x] Write operations
-- [x] VFS
+    - [ ] Write operations
+- [ ] VFS
 - [x] ELF
     - [ ] Syscalls
 - [ ] GUI
     - [ ] WM
-        - [ ] Window compositor
+        - [x] Window compositor
         - [ ] Elements
 - [ ] Custom toolchain
 
