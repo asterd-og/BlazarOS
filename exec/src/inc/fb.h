@@ -15,8 +15,14 @@ font_info* font_get(u8 idx) {
     return rax;
 }
 
-void fb_set_pixel(framebuffer_info* fb, u32 x, u32 y, u32 color) {
-    if (x > fb->width || x < 0 || y > fb->height || y < 0) return;
+void fb_set_pixel(framebuffer_info* fb, i32 x, i32 y, u32 color) {
+    uint32_t xMask = ((uint32_t)x >> 31) | (uint32_t)(fb->width - x - 1) >> 31;
+    uint32_t yMask = ((uint32_t)y >> 31) | (uint32_t)(fb->height - y - 1) >> 31;
+    
+    // Check if any bits are set in the masks
+    if (xMask | yMask) {
+        return; // Exit early if out of bounds
+    }
     fb->buffer[y * fb->pitch / 4 + x] = color;
 }
 

@@ -23,20 +23,32 @@ void fb_draw_str(framebuffer_info* fb, u32 x, u32 y, u32 color, char* c, font_in
     }
 }
 
-void fb_set_pixel(framebuffer_info* fb, u32 x, u32 y, u32 color) {
-    if (x > fb->width || x < 0 || y > fb->height || y < 0) return;
+void fb_set_pixel(framebuffer_info* fb, i32 x, i32 y, u32 color) {
+    uint32_t xMask = ((uint32_t)x >> 31) | (uint32_t)(fb->width - x - 1) >> 31;
+    uint32_t yMask = ((uint32_t)y >> 31) | (uint32_t)(fb->height - y - 1) >> 31;
+    
+    // Check if any bits are set in the masks
+    if (xMask | yMask) {
+        return; // Exit early if out of bounds
+    }
     fb->buffer[y * fb->pitch / 4 + x] = color;
 }
 
-u32 fb_get_pixel(framebuffer_info* fb, u32 x, u32 y) {
-    if (x > fb->width || x < 0 || y > fb->height || y < 0) return 0;
+u32 fb_get_pixel(framebuffer_info* fb, i32 x, i32 y) {
+    uint32_t xMask = ((uint32_t)x >> 31) | (uint32_t)(fb->width - x - 1) >> 31;
+    uint32_t yMask = ((uint32_t)y >> 31) | (uint32_t)(fb->height - y - 1) >> 31;
+    
+    // Check if any bits are set in the masks
+    if (xMask | yMask) {
+        return 0; // Exit early if out of bounds
+    }
     return fb->buffer[y * fb->pitch / 4 + x];
 }
 
 void fb_draw_rectangle(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 color) {
     for (u32 xx = x; xx < w + x; xx++) {
         for (u32 yy = y; yy < y + h; yy++) {
-            fb->buffer[yy * fb->pitch / 4 + xx] = color;
+            fb_set_pixel(fb, xx, yy, color);
         }
     }
 }

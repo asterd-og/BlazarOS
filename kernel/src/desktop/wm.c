@@ -86,7 +86,7 @@ u32* wm_fb_buffer = NULL;
 framebuffer_info* wm_fb = NULL;
 tga_info* wpp = NULL;
 
-bool wm_redraw = true;
+bool wm_redraw = false;
 bool wm_redrawn = false;
 bool wm_moving_window = false;
 
@@ -137,7 +137,6 @@ void wm_update() {
             wm_redrawn = false;
         } else {
             fb_draw_tga(wm_fb, 0, 0, wpp);
-            fb_blit_fb(vbe, wm_fb, 0, 0);
             wm_redrawn = true;
         }
     }
@@ -165,8 +164,8 @@ void wm_update() {
                 }
                 fb_blit_fb(wm_fb, win->fb, win->rect.x, win->rect.y);
                 fb_blit_fb(vbe, wm_fb, 0, 0);
-                vbe_swap();
                 wm_draw_mouse();
+                vbe_swap();
                 win->dirty = false;
                 win->fb_dirty = false;
             }
@@ -242,4 +241,7 @@ void wm_init() {
     wpp = tga_parse(buf, blazfs_ftell("wpp.tga"));
 
     fb_draw_tga(wm_fb, 0, 0, wpp);
+    fb_blit_fb(vbe, wm_fb, 0, 0);
+    vbe_swap();
+    wm_mouse_task();
 }

@@ -17,8 +17,8 @@ framebuffer_info* fb_create(u32* buffer, u32 width, u32 height, u32 pitch);
 void fb_draw_char(framebuffer_info* fb, u32 x, u32 y, u32 color, char c, font_info font);
 void fb_draw_str(framebuffer_info* fb, u32 x, u32 y, u32 color, char* c, font_info font);
 
-void fb_set_pixel(framebuffer_info* fb, u32 x, u32 y, u32 color);
-u32 fb_get_pixel(framebuffer_info* fb, u32 x, u32 y);
+void fb_set_pixel(framebuffer_info* fb, i32 x, i32 y, u32 color);
+u32 fb_get_pixel(framebuffer_info* fb, i32 x, i32 y);
 
 void fb_draw_rectangle(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 color);
 void fb_draw_outline(framebuffer_info* fb, u32 x, u32 y, u32 w, u32 h, u32 color);
